@@ -177,6 +177,15 @@ def main():
 
     # ---- combine: confirmed (real grades) takes priority; scheduled is a fallback
     # for courses with no grade-history evidence at all ----
+    # NOTE (2026-07-17, student-confirmed correction): "confirmed" is grade-history
+    # based, so it can be *stale* if a course's season changed more recently than
+    # its last graded offering - "scheduled" (live SAP registration) is then the
+    # more current signal, but the priority below still prefers the stale one.
+    # Hit this for 00140619 (confirmed said spring, scheduled already said winter -
+    # winter was correct) and 00140520 (both signals here said spring, but a
+    # current student confirmed winter directly - likely moved after this scrape).
+    # Re-running this script will silently re-clobber both back to the wrong
+    # season unless this priority/staleness issue is fixed first.
     season_order = {"winter": 0, "spring": 1, "summer": 2}
     detail = {}
     compact = {}

@@ -30,6 +30,8 @@ window.FINDEG_ENGINE = (function () {
     return { passed, isDone, findRec };
   }
 
+  // הערה: משמש תמיד לרשימות חובה (לא בחירה) - אין כאן סטטוס "בהמשך", מקצוע חובה
+  // "יילמד בהמשך" באופן טאוטולוגי כל עוד לא הושלם, אין בזה מידע חדש.
   function evalCoursesSection(section, idx, overrides) {
     const rows = section.items.map(item => {
       const done = item.ids.some(id => idx.isDone(id));
@@ -75,9 +77,10 @@ window.FINDEG_ENGINE = (function () {
   function evalChoosePoints(section, idx, overrides) {
     const { hits, misses } = poolHits(section.pool, idx, overrides);
     const pts = hits.filter(h => !h.planned).reduce((s, h) => s + (h.rec.pts || 0), 0);
+    const plannedPts = hits.filter(h => h.planned).reduce((s, h) => s + (h.rec.pts || 0), 0);
     return {
       kind: "choosePoints", section, hits, misses,
-      pts, needed: section.minPts, satisfied: pts >= section.minPts
+      pts, plannedPts, needed: section.minPts, satisfied: pts >= section.minPts
     };
   }
 
@@ -90,18 +93,20 @@ window.FINDEG_ENGINE = (function () {
     const done = ids.every(id => idx.isDone(id));
     const rec = idx.findRec(ids);
     const planned = !done && overrides && ids.some(id => overrides[id] === "planned");
+    const later = !done && !planned && overrides && ids.some(id => overrides[id] === "later");
     const manual = done && ids.every(id => !idx.passed.has(id));
     const pts = ids.reduce((s, id) => s + (D().coursePoints[id] || 0), 0);
     const statuses = ids.map(id => {
       if (equivSet(id).some(e => idx.passed.has(e))) return "real";
       if (overrides && overrides[id] === "done") return "manual";
       if (overrides && overrides[id] === "planned") return "planned";
+      if (overrides && overrides[id] === "later") return "later";
       return "none";
     });
-    const counts = { real: 0, manual: 0, planned: 0, none: 0 };
+    const counts = { real: 0, manual: 0, planned: 0, later: 0, none: 0 };
     statuses.forEach(s => counts[s]++);
     const mixed = ids.length > 1 && new Set(statuses).size > 1;
-    return { ids, done, rec, planned, manual, pts, mixed, counts };
+    return { ids, done, rec, planned, later, manual, pts, mixed, counts };
   }
 
   // ענף רישום ברשם המהנדסים - עצמאי לגמרי מדרישות התואר, אותה בדיקת isDone/overrides
@@ -237,7 +242,8 @@ window.FINDEG_ENGINE = (function () {
         if (chain.chooseFrom) {
           const { hits, misses } = poolHits(chain.chooseFrom.pool, idx, overrides);
           const doneCount = hits.filter(h => !h.planned).length;
-          chooseResult = { min: chain.chooseFrom.min, hits, misses, doneCount, satisfied: doneCount >= chain.chooseFrom.min };
+          const plannedCount = hits.filter(h => h.planned).length;
+          chooseResult = { min: chain.chooseFrom.min, hits, misses, doneCount, plannedCount, satisfied: doneCount >= chain.chooseFrom.min };
         }
         const coreSatisfied = coreRows.every(r => r.done);
         chainResults.push({
@@ -315,11 +321,15 @@ window.FINDEG_ENGINE = (function () {
     }
     manualCourses.forEach((m, i) => {
       if (buckets[m.cat]) {
-        buckets[m.cat].courses.push({ name: m.name, pts: +m.pts || 0, manualIndex: i, planned: m.status === "planned" });
-        // מקצוע שנוסף ידנית וסומן "הושלם" (לא "מתוכנן") נספר גם בסך הנקודות
-        // שנצברו, בדיוק כמו סימון "הושלם" על דרישה קיימת - אחרת הסל מציג "מלא"
-        // בעוד הסיכום הכללי לא זז, מה שנראה כאילו המקצוע "לא נספר" בכלל.
-        if (m.status !== "planned") overrideDonePts += +m.pts || 0;
+        buckets[m.cat].courses.push({
+          name: m.name, pts: +m.pts || 0, manualIndex: i,
+          planned: m.status === "planned", later: m.status === "later"
+        });
+        // מקצוע שנוסף ידנית וסומן "הושלם" (לא "מתוכנן"/"בהמשך") נספר גם בסך
+        // הנקודות שנצברו, בדיוק כמו סימון "הושלם" על דרישה קיימת - אחרת הסל מציג
+        // "מלא" בעוד הסיכום הכללי לא זז, מה שנראה כאילו המקצוע "לא נספר" בכלל.
+        // "בהמשך" לא נספר בשום מקום - הוא לא התקדמות, רק תזכורת עתידית.
+        if (m.status === "done") overrideDonePts += +m.pts || 0;
       }
     });
     // נקודות "עודפות" מקבוצה א'+ב' (מעבר ל-20 הנדרשות) נספרות אוטומטית בבחירה חופשית
@@ -328,7 +338,7 @@ window.FINDEG_ENGINE = (function () {
       buckets.free.courses.push({ name: "עודף נקודות מקבוצה א'+ב'", pts: overflow, overflow: true });
     }
     for (const b of Object.values(buckets)) {
-      b.pts = b.courses.filter(c => !c.planned).reduce((s, c) => s + c.pts, 0);
+      b.pts = b.courses.filter(c => !c.planned && !c.later).reduce((s, c) => s + c.pts, 0);
       b.done = Math.min(b.pts, b.needed);
       b.satisfied = b.pts >= b.needed;
     }

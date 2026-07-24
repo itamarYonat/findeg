@@ -13,8 +13,11 @@
   --bad-soft: #fdeaea;
   --manual: #8a4fd6;
   --manual-soft: #f1e9fb;
+  --later: #a68a00;
+  --later-soft: #fff8dc;
   --total: #0d9488;
   --total-soft: #e3f6f3;
+  --autopick: #9a2d4e; /* בורדו - בין אדום לוורוד: מילוי-מכסה אוטומטי בתכנון אופטימלי */
   --border: #dde3ef;
   --radius: 14px;
   --shadow: 0 1px 3px rgba(20, 30, 60, .08), 0 8px 24px rgba(20, 30, 60, .06);
@@ -35,8 +38,11 @@
     --bad-soft: #2d1517;
     --manual: #b48ae8;
     --manual-soft: #241a33;
+    --later: #e0c341;
+    --later-soft: #332b0d;
     --total: #2dd4bf;
     --total-soft: #12302c;
+    --autopick: #d05c80;
     --border: #2a3242;
     --shadow: 0 1px 3px rgba(0,0,0,.4);
   }
@@ -74,6 +80,40 @@ main { max-width: 880px; margin: 0 auto; padding: 0 16px 48px; }
 .tool-tab:hover { background: var(--bg); }
 .tool-tab.active { background: var(--accent-soft); color: var(--accent); }
 .tool-tab.active:hover { background: var(--accent-soft); }
+
+/* תפריט תלוי (hover) על "תרשימי זרימה": מסלול -> משנה-תפריט צדדי (מומלץ/אופטימלי).
+   נשמר כ-2 רמות hover פשוטות (בלי JS למעבר עכבר) - ראו js/nav-menu.js למילוי התוכן. */
+.tool-tab-dd { position: relative; display: inline-block; }
+.tool-tab-dd-menu {
+  display: none;
+  position: absolute; top: 100%; right: 0; margin-top: 2px;
+  background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .12);
+  min-width: 240px; padding: 6px; z-index: 60;
+}
+.tool-tab-dd:hover .tool-tab-dd-menu,
+.tool-tab-dd-menu:hover { display: block; }
+.fc-nav-branch { position: relative; }
+.fc-nav-branch-label {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 8px 10px; border-radius: 7px; cursor: default; white-space: nowrap;
+  font-size: .88rem; font-weight: 600;
+}
+.fc-nav-branch:hover > .fc-nav-branch-label { background: var(--bg); }
+.fc-nav-sub {
+  display: none;
+  position: absolute; top: -6px; left: 100%; margin-inline-end: 4px;
+  background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .12);
+  min-width: 190px; padding: 6px; z-index: 61;
+}
+.fc-nav-branch:hover > .fc-nav-sub { display: block; }
+.fc-nav-sub a {
+  display: block; padding: 8px 10px; border-radius: 7px; white-space: nowrap;
+  color: var(--text); text-decoration: none; font-size: .86rem;
+}
+.fc-nav-sub a:hover { background: var(--accent-soft); color: var(--accent); }
+.fc-nav-sub a.disabled { opacity: .4; pointer-events: none; }
 
 .sem-badge {
   display: inline-block;
@@ -231,13 +271,19 @@ tr.done .cname { text-decoration: line-through; text-decoration-thickness: 1px; 
 .badge.miss { background: var(--bad-soft); color: var(--bad); }
 .badge.part { background: var(--warn-soft); color: var(--warn); }
 .badge.plan { background: var(--accent-soft); color: var(--accent); }
+.badge.later { background: var(--later-soft); color: var(--later); }
 .status-plan { color: var(--accent); font-weight: 700; }
+.status-later { color: var(--later); font-weight: 700; }
 .num-done { color: var(--ok); }
 .num-manual { color: var(--manual); }
 .num-planned { color: var(--accent); }
+.num-later { color: var(--later); }
 tr.planned-row td { background: var(--accent-soft); }
 tr.planned-row td:first-child { border-radius: 0 8px 8px 0; }
 tr.planned-row td:last-child { border-radius: 8px 0 0 8px; }
+tr.later-row td { background: var(--later-soft); }
+tr.later-row td:first-child { border-radius: 0 8px 8px 0; }
+tr.later-row td:last-child { border-radius: 8px 0 0 8px; }
 .upcoming-card { border: 1px solid var(--accent); }
 .chain-card { border-right: 4px solid var(--accent); }
 
@@ -267,6 +313,7 @@ tr.planned-row td:last-child { border-radius: 8px 0 0 8px; }
 .seg-done { background: var(--ok); }
 .seg-manual { background: var(--manual); }
 .seg-planned { background: var(--accent); }
+.seg-later { background: var(--later); }
 .status-manual { color: var(--manual); font-weight: 700; }
 
 .chain-caption {
@@ -360,6 +407,11 @@ button.pool-item.planned {
   background: var(--accent-soft);
 }
 button.pool-item.hit.manual { border: 1px dashed var(--ok); }
+button.pool-item.later {
+  border: 1px dashed var(--later);
+  color: var(--later);
+  background: var(--later-soft);
+}
 
 .pool-rows { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
 .pool-item-row {
@@ -372,6 +424,7 @@ button.pool-item.hit.manual { border: 1px dashed var(--ok); }
   border-radius: 8px;
   font-size: .9rem;
 }
+.pool-item-row.later { border-color: var(--later); background: var(--later-soft); }
 .pool-item-row .pi-actions { display: flex; gap: 6px; flex-shrink: 0; }
 
 /* פרויקטים: כל פרויקט בסלוט נפרד משלו */
@@ -386,6 +439,7 @@ button.pool-item.hit.manual { border: 1px dashed var(--ok); }
 }
 .project-slot.done { border-color: var(--ok); background: var(--ok-soft); }
 .project-slot.planned { border-color: var(--accent); background: var(--accent-soft); }
+.project-slot.later { border-color: var(--later); background: var(--later-soft); }
 .project-slot.mixed { border-color: var(--manual); }
 .project-slot-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
 .project-slot .cname { font-weight: 600; }
@@ -395,6 +449,7 @@ button.pool-item.hit.manual { border: 1px dashed var(--ok); }
 .split-done { color: var(--ok); }
 .split-manual { color: var(--manual); }
 .split-planned { color: var(--accent); }
+.split-later { color: var(--later); }
 .split-none { color: var(--bad); }
 
 /* בחירה כלל-טכניונית */
@@ -449,6 +504,8 @@ button.pool-item.hit.manual { border: 1px dashed var(--ok); }
   font-weight: 600;
 }
 .add-btn:hover { filter: brightness(1.1); }
+.flowchart-link-card { display: flex; justify-content: center; }
+.flowchart-link-card .add-btn { text-decoration: none; font-size: 1rem; padding: 10px 24px; }
 
 .override-btn {
   background: none;
@@ -479,7 +536,27 @@ tr.overridden td { color: var(--muted); }
 }
 /* תרשים זרימה */
 .fc-main { max-width: 1500px; }
+.fc-mode-tabs { display: flex; gap: 8px; margin: 18px 16px 0; }
+.fc-mode-tab {
+  flex: 1 1 auto;
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--muted);
+  font-weight: 700;
+  font-size: .95rem;
+  cursor: pointer;
+}
+.fc-mode-tab:hover { background: var(--bg); }
+.fc-mode-tab.active { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
 #fc-page { position: relative; }
+#fc-opt-page { position: relative; max-width: 1500px; margin: 0 auto; padding: 0 16px 48px; }
+#fc-manual-page { position: relative; max-width: 1500px; margin: 0 auto; padding: 0 16px 48px; }
+.fco-sem-col { display: flex; flex-direction: column; gap: 10px; }
+.fco-sem-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.fco-sem-head b { font-size: 1rem; }
+.fco-sem-head span { color: var(--muted); font-size: .78rem; }
 .fc-toolbar { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
 .fc-toolbar label { display: flex; align-items: center; gap: 6px; font-weight: 600; font-size: .92rem; }
 .fc-wrap { position: relative; }
@@ -487,7 +564,7 @@ tr.overridden td { color: var(--muted); }
   display: flex;
   flex-direction: column;
   gap: 64px;
-  padding: 12px 24px 12px 150px; /* שוליים שמאליים רחבים - "נתיב" למעברי חיצים ארוכי-טווח */
+  padding: 12px 24px;
 }
 .fc-row { display: flex; flex-direction: column; gap: 14px; }
 .fc-row-head {
@@ -501,31 +578,139 @@ tr.overridden td { color: var(--muted); }
   color: var(--accent);
 }
 .fc-row-head.spring { background: var(--ok-soft); color: var(--ok); }
-.fc-row-boxes { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 22px; }
+/* nowrap בכוונה: כל מקצועות אותו סמסטר חייבים לשבת באותה שורה חזותית (בקשת
+   משתמש) - במקום לגלוש לשורה שנייה, התיבות עצמן מצטמצמות (ראו .fc-box למטה). */
+.fc-row-boxes { display: flex; flex-wrap: nowrap; align-items: flex-start; gap: 10px; overflow-x: visible; }
 .fc-box {
   border: 1px solid var(--border);
   background: var(--card);
-  border-radius: 10px;
-  padding: 12px 16px;
-  font-size: .92rem;
-  line-height: 1.5;
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: .74rem;
+  line-height: 1.35;
   position: relative;
-  min-width: 190px;
+  min-width: 108px;
+  flex: 1 1 108px;
 }
-.fc-box b { display: block; font-size: .95rem; margin-bottom: 2px; }
-.fc-box .fc-code { color: var(--muted); font-size: .8rem; }
-.fc-box .fc-pts { color: var(--accent); font-weight: 700; float: left; font-size: .82rem; }
+/* קליק על תיבת מקצוע (לא "כללי"/dashed - לאלה אין data-course-id) = סימון/
+   ביטול "הושלם", ראו toggleDoneOverride ב-flowchart.js. */
+#fc-page .fc-box[data-course-id], #fc-opt-page .fc-box[data-course-id] {
+  cursor: pointer;
+  transition: box-shadow .12s, border-color .12s;
+}
+#fc-page .fc-box[data-course-id]:hover, #fc-opt-page .fc-box[data-course-id]:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+.fc-box b { display: block; font-size: .78rem; margin-bottom: 1px; }
+.fc-box .fc-code { color: var(--muted); font-size: .68rem; }
+.fc-box .fc-pts { color: var(--accent); font-weight: 700; float: left; font-size: .68rem; }
 .fc-box.fc-general { border-style: dashed; color: var(--muted); background: transparent; text-align: center; }
+.fc-box .fc-general-note { color: var(--muted); font-size: .68rem; }
+.fc-box .fc-push-note { color: var(--warn); }
 .fc-box.fc-flexible { border-style: dashed; border-color: var(--warn); }
 .fc-box.fc-uncertain { border-color: var(--warn); }
 .fc-box.fc-elective { background: var(--total-soft); border-color: var(--total); }
+.fc-box.fc-synced-done { background: var(--ok-soft); border-color: var(--ok); }
+.fc-box.fc-synced-planned { background: var(--accent-soft); border-color: var(--accent); }
 .fc-box.fc-project { background: var(--manual-soft); border-color: var(--manual); }
 .fc-box.fc-critical { border: 2px solid var(--bad); box-shadow: 0 0 0 3px var(--bad-soft); }
 .fc-box.fc-critical b { color: var(--bad); }
-.fc-box .fc-unpin { position: absolute; top: 4px; left: 8px; cursor: pointer; color: var(--muted); font-size: .95rem; background: none; border: none; }
+.fc-box .fc-unpin { position: absolute; top: 2px; left: 4px; cursor: pointer; color: var(--muted); font-size: .85rem; background: none; border: none; }
 .fc-box .fc-unpin:hover { color: var(--bad); }
 
+/* תכנון ידני (גרירה ושחרור) - ראו renderManualView ב-flowchart.js */
+.fc-box[draggable="true"] { cursor: grab; }
+.fc-box[draggable="true"]:active { cursor: grabbing; }
+.fc-box .fc-warn-badge {
+  position: absolute; top: 2px; right: 4px;
+  color: var(--bad); font-weight: 800; font-size: .85rem; cursor: help;
+}
+.fcm-drop-zone, .fco-drop-zone { min-height: 46px; border-radius: 8px; transition: background .1s, outline .1s; }
+.fcm-drop-zone.fc-dragover, .fco-drop-zone.fc-dragover { outline: 2px dashed var(--accent); outline-offset: 2px; background: var(--accent-soft); }
+.fc-box.fc-hard-pinned { border-color: var(--total); box-shadow: inset 0 0 0 1px var(--total); }
+/* תיבות בחירה בתכנון אופטימלי: בורדו = האלגוריתם בחר לבדו (ממלא-מקום למכסה,
+   ניתן להחלפה בפאנל למטה); כחול = בחירת המשתמש/ת (נעיצה/"מתוכנן"/"בהמשך"). */
+.fc-box.fc-auto-elective { border-color: var(--autopick); box-shadow: inset 0 0 0 1px var(--autopick); }
+.fc-box.fc-auto-elective .fc-auto-note { color: var(--autopick); }
+.fc-box.fc-user-elective { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+/* "בהמשך" - צהוב, כמו ה-chip בפאנל (synced-later) */
+.fc-box.fc-later-elective { border-color: var(--later); box-shadow: inset 0 0 0 1px var(--later); }
+.fcm-tray-wrap { margin-top: 28px; border-top: 2px dashed var(--border); padding-top: 16px; position: relative; z-index: 2; }
+.fcm-tray-head { font-weight: 700; margin-bottom: 8px; color: var(--muted); }
+.fcm-tray { min-height: 60px; border: 2px dashed var(--border); border-radius: 10px; padding: 10px; }
+.fcm-tray-group { margin-bottom: 12px; }
+.fcm-tray-group:last-child { margin-bottom: 0; }
+.fcm-tray-group-title { font-weight: 700; font-size: .8rem; color: var(--muted); margin-bottom: 6px; }
+.fcm-tray-row { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 10px; }
+.fcm-tray-empty { color: var(--muted); font-size: .85rem; text-align: center; padding: 10px; }
+
+/* מקצוע שהושלם (לפי FinDeg) - אפור + "ערפל" מעל התוכן; ראו computeDoneIds ב-
+   flowchart.js. החצים היוצאות ממנו (לא הנכנסות) מושמטות לגמרי, לא רק מעומעמות. */
+.fc-box.fc-done { filter: grayscale(0.9); color: var(--muted); }
+.fc-box .fc-mist {
+  position: absolute; inset: 0;
+  background: rgba(255, 255, 255, .45);
+  border-radius: inherit;
+  pointer-events: none;
+}
+@media (prefers-color-scheme: dark) {
+  .fc-box .fc-mist { background: rgba(0, 0, 0, .4); }
+}
+
 .fc-svg { position: absolute; top: 0; left: 0; pointer-events: none; overflow: visible; z-index: 1; }
+
+/* ערפל מעל שורת-סמסטר שכבר חלפה בלוח הזמנים (לפי תאריך אמיתי, ראו
+   computeCompletedSemesters ב-flowchart.js) - z-index גבוה מ-.fc-svg כדי
+   לכסות גם את החצים שחוצים את השורה, לא רק את התיבות.
+   המרקם עצמו (img/fog1.png, img/fog2.png) שאול מטכניקת "CSS Fog Animation"
+   הידועה (danielstuart14/CSS_FOG_ANIMATION, ראו גם braedencraig ב-CodePen) -
+   שתי תמונות נעות ברוחב בקצב שונה זו מזו (::before/::after, לא עוד DOM
+   מ-JS) מעל צבע הבסיס (background-color, זה שמשתנה בהיר/כהה למטה), במקום
+   ה"רעש" השטוח הקודם. העמעום ("נשימה") של כל שכבה נע חלק קדימה-ואחורה
+   (animation-direction: alternate) בין 50% ל-150% מעוצמת-הבסיס שלה - לא בין
+   0% ל-100% כמו בדוגמה המקורית - כדי שהערפל יישאר תמיד עדין וקרוב לצבע
+   הרקע, לא יעלם/יתעצם לגמרי. */
+.fc-fog {
+  position: absolute;
+  overflow: hidden;
+  background-color: rgba(255, 255, 255, .3);
+  filter: blur(1px);
+  border-radius: 12px;
+  pointer-events: none;
+  z-index: 2;
+}
+.fc-fog::before, .fc-fog::after {
+  content: "";
+  position: absolute;
+  top: -20%; left: -20%;
+  width: 140%; height: 140%;
+  background-repeat: repeat-x;
+  /* בכוונה בלי mix-blend-mode: screen - זה בלתי-נראה לגמרי מעל רקע בהיר/לבן
+     (סינתוז screen על גבי לבן טהור תמיד נותן לבן, ראו נוסחת ה-blend), ו-
+     כרטיס האתר בערכת הנושא הבהירה לבן/כמעט-לבן. blend רגיל (ברירת המחדל)
+     מציג את הגוונים הכהים יותר שבתמונה גם מעל רקע בהיר. */
+}
+.fc-fog::before {
+  background-image: url("../img/fog1.png");
+  background-size: 900px 100%;
+  animation: fc-fog-drift-a 26s linear infinite, fc-fog-breathe-a 9s ease-in-out infinite alternate;
+}
+.fc-fog::after {
+  background-image: url("../img/fog2.png");
+  background-size: 650px 100%;
+  animation: fc-fog-drift-b 19s linear infinite reverse, fc-fog-breathe-b 12s ease-in-out infinite alternate;
+}
+@keyframes fc-fog-drift-a { from { background-position-x: 0; } to { background-position-x: -900px; } }
+@keyframes fc-fog-drift-b { from { background-position-x: 0; } to { background-position-x: -650px; } }
+/* 50%-150% סביב בסיס .6/.45 בהתאמה (לא 0%-100%) - ראו הערה למעלה. גבוה
+   יותר מהניחוש הראשון כי לתמונות המקור עצמן יש שקיפות-בסיס נמוכה כבר
+   (~10-18% אלפא) - בלי ההגברה כאן זה כמעט בלתי-נראה גם בלי blend-mode. */
+@keyframes fc-fog-breathe-a { 0% { opacity: .3; } 100% { opacity: .9; } }
+@keyframes fc-fog-breathe-b { 0% { opacity: .225; } 100% { opacity: .675; } }
+@media (prefers-color-scheme: dark) {
+  .fc-fog { background-color: rgba(10, 14, 22, .35); }
+}
 
 .fc-electives { margin-top: 26px; }
 .fc-chain { margin-bottom: 22px; }
@@ -545,7 +730,12 @@ tr.overridden td { color: var(--muted); }
 }
 .fc-chip:hover { border-color: var(--accent); }
 .fc-chip.pinned { background: var(--total-soft); border-color: var(--total); color: var(--total); }
+.fc-chip.synced { background: var(--ok-soft); border-color: var(--ok); color: var(--ok); }
+.fc-chip.synced-later { background: var(--later-soft); border-color: var(--later); color: var(--later); }
+#fc-sync-note:not(:empty) { color: var(--accent); font-weight: 600; }
 .fc-chip select { font-size: .8rem; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text); }
+.fc-want-toggle { display: inline-flex; align-items: center; gap: 4px; font-size: .8rem; cursor: pointer; }
+.fc-want-toggle input { cursor: pointer; }
 
 .fc-legend { display: flex; flex-wrap: wrap; gap: 18px; font-size: .85rem; color: var(--muted); margin-top: 12px; }
 .fc-legend span { display: flex; align-items: center; gap: 6px; }

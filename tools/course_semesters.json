@@ -222,10 +222,31 @@
       "winter"
     ]
   },
+  "00140302": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": [
+      "winter",
+      "spring"
+    ]
+  },
   "00140305": {
     "confirmedSeasons": [],
     "scheduledSeasons": [
       "winter"
+    ]
+  },
+  "00140309": {
+    "confirmedSeasons": [
+      "winter"
+    ],
+    "scheduledSeasons": [
+      "winter"
+    ]
+  },
+  "00140313": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": [
+      "spring"
     ]
   },
   "00140316": {
@@ -236,6 +257,18 @@
     "scheduledSeasons": [
       "winter"
     ]
+  },
+  "00140321": {
+    "confirmedSeasons": [
+      "winter"
+    ],
+    "scheduledSeasons": [
+      "winter"
+    ]
+  },
+  "00140324": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": []
   },
   "00140325": {
     "confirmedSeasons": [],
@@ -261,6 +294,12 @@
       "spring"
     ]
   },
+  "00140333": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": [
+      "spring"
+    ]
+  },
   "00140405": {
     "confirmedSeasons": [
       "spring"
@@ -268,6 +307,10 @@
     "scheduledSeasons": [
       "spring"
     ]
+  },
+  "00140406": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": []
   },
   "00140409": {
     "confirmedSeasons": [
@@ -340,7 +383,9 @@
     ]
   },
   "00140520": {
-    "confirmedSeasons": [],
+    "confirmedSeasons": [
+      "winter"
+    ],
     "scheduledSeasons": [
       "spring"
     ]
@@ -421,7 +466,7 @@
   },
   "00140619": {
     "confirmedSeasons": [
-      "spring"
+      "winter"
     ],
     "scheduledSeasons": [
       "winter"
@@ -555,6 +600,12 @@
       "winter"
     ]
   },
+  "00140730": {
+    "confirmedSeasons": [
+      "winter"
+    ],
+    "scheduledSeasons": []
+  },
   "00140731": {
     "confirmedSeasons": [
       "spring"
@@ -591,6 +642,28 @@
       "spring"
     ]
   },
+  "00140814": {
+    "confirmedSeasons": [
+      "spring"
+    ],
+    "scheduledSeasons": [
+      "spring"
+    ]
+  },
+  "00140829": {
+    "confirmedSeasons": [
+      "winter"
+    ],
+    "scheduledSeasons": [
+      "winter"
+    ]
+  },
+  "00140831": {
+    "confirmedSeasons": [
+      "summer"
+    ],
+    "scheduledSeasons": []
+  },
   "00140841": {
     "confirmedSeasons": [
       "winter",
@@ -599,6 +672,22 @@
     "scheduledSeasons": [
       "winter",
       "spring"
+    ]
+  },
+  "00140842": {
+    "confirmedSeasons": [
+      "winter"
+    ],
+    "scheduledSeasons": [
+      "winter"
+    ]
+  },
+  "00140843": {
+    "confirmedSeasons": [
+      "winter"
+    ],
+    "scheduledSeasons": [
+      "winter"
     ]
   },
   "00140845": {
@@ -617,15 +706,195 @@
       "winter"
     ]
   },
+  "00140848": {
+    "confirmedSeasons": [
+      "winter"
+    ],
+    "scheduledSeasons": [
+      "winter"
+    ]
+  },
+  "00140849": {
+    "confirmedSeasons": [
+      "spring"
+    ],
+    "scheduledSeasons": [
+      "spring"
+    ]
+  },
+  "00140851": {
+    "confirmedSeasons": [
+      "winter"
+    ],
+    "scheduledSeasons": [
+      "winter"
+    ]
+  },
+  "00140852": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": [
+      "spring"
+    ]
+  },
+  "00140853": {
+    "confirmedSeasons": [
+      "spring"
+    ],
+    "scheduledSeasons": [
+      "spring"
+    ]
+  },
+  "00140855": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": [
+      "winter"
+    ]
+  },
+  "00140856": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": [
+      "spring"
+    ]
+  },
   "00140857": {
     "confirmedSeasons": [],
     "scheduledSeasons": [
       "spring"
     ]
   },
+  "00140859": {
+    "confirmedSeasons": [
+      "spring"
+    ],
+    "scheduledSeasons": [
+      "spring"
+    ]
+  },
+  "00140862": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": []
+  },
+  "00140863": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": []
+  },
+  "00140864": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": []
+  },
+  "00140866": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": [
+      "winter",
+      "spring"
+    ]
+  },
+  "00140867": {
+    "confirmedSeasons": [
+      "winter"
+    ],
+    "scheduledSeasons": [
+      "winter",
+      "spring"
+    ]
+  },
+  "00140868": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": [
+      "winter",
+      "spring"
+    ]
+  },
+  "00140869": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": [
+      "winter",
+      "spring"
+    ]
+  },
   "00140872": {
     "confirmedSeasons": [],
     "scheduledSeasons": []
+  },
+  "00140875": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": []
+  },
+  "00140876": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": []
+  },
+  "00140877": {
+    "confirmedSeasons": [
+      "spring"
+    ],
+    "scheduledSeasons": [
+      "spring"
+    ]
+  },
+  "00140878": {
+    "confirmedSeasons": [
+      "spring"
+    ],
+    "scheduledSeasons": [
+      "spring"
+    ]
+  },
+  "00140879": {
+    "confirmedSeasons": [
+      "winter"
+    ],
+    "scheduledSeasons": [
+      "winter"
+    ]
+  },
+  "00140880": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": []
+  },
+  "00140881": {
+    "confirmedSeasons": [
+      "spring"
+    ],
+    "scheduledSeasons": [
+      "spring"
+    ]
+  },
+  "00140882": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": [
+      "spring"
+    ]
+  },
+  "00140885": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": [
+      "winter"
+    ]
+  },
+  "00140886": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": []
+  },
+  "00140888": {
+    "confirmedSeasons": [
+      "spring"
+    ],
+    "scheduledSeasons": [
+      "spring"
+    ]
+  },
+  "00140889": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": [
+      "spring"
+    ]
+  },
+  "00140890": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": [
+      "winter"
+    ]
   },
   "00140935": {
     "confirmedSeasons": [],
@@ -677,6 +946,10 @@
     "confirmedSeasons": [],
     "scheduledSeasons": []
   },
+  "00140966": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": []
+  },
   "00140972": {
     "confirmedSeasons": [],
     "scheduledSeasons": [
@@ -689,6 +962,34 @@
     ],
     "scheduledSeasons": [
       "winter"
+    ]
+  },
+  "00140978": {
+    "confirmedSeasons": [
+      "winter"
+    ],
+    "scheduledSeasons": [
+      "winter"
+    ]
+  },
+  "00140979": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": [
+      "spring"
+    ]
+  },
+  "00150001": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": [
+      "spring"
+    ]
+  },
+  "00150007": {
+    "confirmedSeasons": [
+      "spring"
+    ],
+    "scheduledSeasons": [
+      "spring"
     ]
   },
   "00150017": {
@@ -705,6 +1006,10 @@
     "scheduledSeasons": [
       "spring"
     ]
+  },
+  "00150024": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": []
   },
   "00160111": {
     "confirmedSeasons": [
@@ -776,6 +1081,14 @@
       "spring"
     ]
   },
+  "00160213": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": []
+  },
+  "00160220": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": []
+  },
   "00160223": {
     "confirmedSeasons": [],
     "scheduledSeasons": [
@@ -783,10 +1096,60 @@
       "spring"
     ]
   },
+  "00160303": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": [
+      "spring"
+    ]
+  },
+  "00160304": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": [
+      "winter"
+    ]
+  },
+  "00160305": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": []
+  },
   "00160306": {
     "confirmedSeasons": [],
     "scheduledSeasons": [
       "spring"
+    ]
+  },
+  "00160328": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": []
+  },
+  "00160329": {
+    "confirmedSeasons": [
+      "winter"
+    ],
+    "scheduledSeasons": [
+      "winter"
+    ]
+  },
+  "00160336": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": [
+      "winter"
+    ]
+  },
+  "00160337": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": []
+  },
+  "00160338": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": [
+      "winter"
+    ]
+  },
+  "00160339": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": [
+      "winter"
     ]
   },
   "00160403": {
@@ -832,6 +1195,10 @@
       "spring"
     ]
   },
+  "00160514": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": []
+  },
   "00160619": {
     "confirmedSeasons": [],
     "scheduledSeasons": [
@@ -872,6 +1239,90 @@
     "confirmedSeasons": [],
     "scheduledSeasons": []
   },
+  "00160801": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": [
+      "winter"
+    ]
+  },
+  "00160815": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": [
+      "spring"
+    ]
+  },
+  "00160816": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": []
+  },
+  "00160817": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": []
+  },
+  "00160818": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": [
+      "spring"
+    ]
+  },
+  "00160819": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": [
+      "winter"
+    ]
+  },
+  "00160820": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": [
+      "spring"
+    ]
+  },
+  "00160828": {
+    "confirmedSeasons": [
+      "winter"
+    ],
+    "scheduledSeasons": [
+      "winter"
+    ]
+  },
+  "00160829": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": [
+      "spring"
+    ]
+  },
+  "00160830": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": []
+  },
+  "00160831": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": []
+  },
+  "00160832": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": []
+  },
+  "00160833": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": [
+      "spring"
+    ]
+  },
+  "00160834": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": [
+      "winter"
+    ]
+  },
+  "00160835": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": []
+  },
+  "00160836": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": []
+  },
   "00160837": {
     "confirmedSeasons": [
       "winter"
@@ -880,9 +1331,133 @@
       "spring"
     ]
   },
+  "00170001": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": [
+      "spring"
+    ]
+  },
+  "00170006": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": []
+  },
   "00170012": {
     "confirmedSeasons": [],
     "scheduledSeasons": [
+      "spring"
+    ]
+  },
+  "00170036": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": []
+  },
+  "00340035": {
+    "confirmedSeasons": [
+      "winter",
+      "spring"
+    ],
+    "scheduledSeasons": [
+      "winter",
+      "spring"
+    ]
+  },
+  "00540203": {
+    "confirmedSeasons": [
+      "spring"
+    ],
+    "scheduledSeasons": [
+      "spring"
+    ]
+  },
+  "00540310": {
+    "confirmedSeasons": [
+      "winter"
+    ],
+    "scheduledSeasons": [
+      "winter",
+      "spring"
+    ]
+  },
+  "00540314": {
+    "confirmedSeasons": [
+      "winter"
+    ],
+    "scheduledSeasons": [
+      "winter"
+    ]
+  },
+  "00540316": {
+    "confirmedSeasons": [
+      "winter"
+    ],
+    "scheduledSeasons": [
+      "winter"
+    ]
+  },
+  "00540323": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": [
+      "spring"
+    ]
+  },
+  "00540371": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": []
+  },
+  "00540374": {
+    "confirmedSeasons": [
+      "spring"
+    ],
+    "scheduledSeasons": [
+      "spring"
+    ]
+  },
+  "00540400": {
+    "confirmedSeasons": [
+      "spring"
+    ],
+    "scheduledSeasons": [
+      "spring"
+    ]
+  },
+  "00540410": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": [
+      "spring"
+    ]
+  },
+  "00540414": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": []
+  },
+  "00540451": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": []
+  },
+  "00540452": {
+    "confirmedSeasons": [
+      "winter"
+    ],
+    "scheduledSeasons": [
+      "winter"
+    ]
+  },
+  "00540478": {
+    "confirmedSeasons": [
+      "spring"
+    ],
+    "scheduledSeasons": [
+      "spring"
+    ]
+  },
+  "00560142": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": []
+  },
+  "00560379": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": [
+      "winter",
       "spring"
     ]
   },
@@ -891,6 +1466,16 @@
       "spring"
     ],
     "scheduledSeasons": [
+      "spring"
+    ]
+  },
+  "00940219": {
+    "confirmedSeasons": [
+      "winter",
+      "spring"
+    ],
+    "scheduledSeasons": [
+      "winter",
       "spring"
     ]
   },
@@ -904,6 +1489,24 @@
       "spring"
     ]
   },
+  "00940313": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": []
+  },
+  "00940314": {
+    "confirmedSeasons": [
+      "winter",
+      "spring"
+    ],
+    "scheduledSeasons": [
+      "winter",
+      "spring"
+    ]
+  },
+  "00940323": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": []
+  },
   "00940591": {
     "confirmedSeasons": [
       "winter",
@@ -915,6 +1518,16 @@
       "summer"
     ]
   },
+  "00940594": {
+    "confirmedSeasons": [
+      "winter",
+      "summer"
+    ],
+    "scheduledSeasons": [
+      "winter",
+      "summer"
+    ]
+  },
   "00960411": {
     "confirmedSeasons": [
       "winter",
@@ -923,6 +1536,12 @@
     "scheduledSeasons": [
       "winter",
       "spring"
+    ]
+  },
+  "00960553": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": [
+      "winter"
     ]
   },
   "01030015": {
@@ -1073,12 +1692,28 @@
       "summer"
     ]
   },
+  "01240120": {
+    "confirmedSeasons": [
+      "winter"
+    ],
+    "scheduledSeasons": [
+      "winter"
+    ]
+  },
   "01240503": {
     "confirmedSeasons": [
       "winter"
     ],
     "scheduledSeasons": [
       "winter"
+    ]
+  },
+  "01240801": {
+    "confirmedSeasons": [
+      "spring"
+    ],
+    "scheduledSeasons": [
+      "spring"
     ]
   },
   "01250001": {
@@ -1090,6 +1725,32 @@
       "winter",
       "spring"
     ]
+  },
+  "01340019": {
+    "confirmedSeasons": [
+      "winter",
+      "spring"
+    ],
+    "scheduledSeasons": [
+      "winter",
+      "spring"
+    ]
+  },
+  "01340058": {
+    "confirmedSeasons": [
+      "winter",
+      "spring",
+      "summer"
+    ],
+    "scheduledSeasons": [
+      "winter",
+      "spring",
+      "summer"
+    ]
+  },
+  "01340076": {
+    "confirmedSeasons": [],
+    "scheduledSeasons": []
   },
   "02050598": {
     "confirmedSeasons": [],

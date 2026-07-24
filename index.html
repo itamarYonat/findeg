@@ -5,13 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FinDeg – כמה נשאר לי בתואר?</title>
   <!-- ?v=N מונע ערבוב קבצים ישנים/חדשים מהמטמון של הדפדפן - להעלות N בכל שינוי ב-css/js -->
-  <link rel="stylesheet" href="css/style.css?v=13">
+  <link rel="stylesheet" href="css/style.css?v=59">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎓</text></svg>">
 </head>
 <body>
   <nav class="tool-hub">
     <a href="index.html" class="tool-tab active">🎓 FinDeg</a>
-    <a href="flowcharts.html" class="tool-tab">🗺️ תרשימי זרימה</a>
+    <div class="tool-tab-dd">
+      <a href="flowcharts.html" class="tool-tab">🗺️ תרשימי זרימה</a>
+      <div class="tool-tab-dd-menu" id="fc-nav-menu"></div>
+    </div>
   </nav>
 
   <header class="site-header">
@@ -30,6 +33,7 @@
         <input type="file" id="file-input" accept="application/pdf" hidden>
       </div>
       <p class="privacy-note">🔒 הקובץ מעובד <b>בדפדפן שלכם בלבד</b> ולא נשלח לשום שרת.</p>
+      <button id="clear-transcript" class="override-btn hidden">🗑️ נקה תדפיס שנטען</button>
       <div id="parse-error" class="error hidden"></div>
     </section>
 
@@ -44,10 +48,7 @@
           <select id="year-select"></select>
         </label>
         <label id="spec-wrap" class="hidden">התמחות
-          <select id="spec-select">
-            <option value="water">הנדסת מים</option>
-            <option value="transport">הנדסת תחבורה</option>
-          </select>
+          <select id="spec-select"></select>
         </label>
         <label id="project-wrap" class="hidden">איזה פרויקט (נוסף) בכוונתך לבצע?
           <select id="project-select"></select>
@@ -73,10 +74,13 @@
   </div>
 
   <script src="vendor/pdf.min.js"></script>
-  <script src="js/data.js?v=13"></script>
-  <script src="js/semesters.js?v=13"></script>
-  <script src="js/parser.js?v=13"></script>
-  <script src="js/engine.js?v=13"></script>
-  <script src="js/app.js?v=13"></script>
+  <script src="js/data.js?v=59"></script>
+  <script src="js/semesters.js?v=59"></script>
+  <script src="js/flowchart-data.js?v=59"></script>
+  <script src="js/nav-menu.js?v=59"></script>
+  <script src="js/parser.js?v=59"></script>
+  <script src="js/engine.js?v=59"></script>
+  <script src="js/optimizer.js?v=59"></script>
+  <script src="js/app.js?v=59"></script>
 </body>
 </html>

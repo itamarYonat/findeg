@@ -44,6 +44,43 @@
   let overrides = {}; // דרישות שסומנו ידנית כהושלמו/מתוכננות
   let extras = { categories: {}, manual: [], registrarSecond: null }; // שיוך סלים + מקצועות שהוספו ידנית + ענף רישום נוסף
 
+  // שומרים את התדפיס המפוענח + הבחירות (מסלול/שנה/התמחות/פרויקט) כדי שמעבר בין
+  // FinDeg לתרשימי הזרימה (או רענון הדף) לא יאלץ העלאה מחדש של הקובץ. עד "נקה
+  // תדפיס שנטען" מוחק את זה, כל כניסה חדשה לעמוד משחזרת אוטומטית את המצב האחרון.
+  const LAST_PARSE_KEY = "findeg_last_parse";
+  function persistParsed() {
+    if (!parsed) return;
+    try {
+      localStorage.setItem(LAST_PARSE_KEY, JSON.stringify({
+        parsed,
+        selections: {
+          track: $("#track-select").value,
+          year: $("#year-select").value,
+          spec: $("#spec-select") ? $("#spec-select").value : null,
+          project: $("#project-select") ? $("#project-select").value : null
+        }
+      }));
+    } catch { /* localStorage מלא/חסום - לא קריטי, פשוט לא יישמר */ }
+  }
+  function restoreLastParse() {
+    let saved;
+    try { saved = JSON.parse(localStorage.getItem(LAST_PARSE_KEY)); } catch { saved = null; }
+    if (!saved || !saved.parsed) return false;
+    parsed = saved.parsed;
+    $("#dz-text").textContent = "✓ התדפיס האחרון נטען אוטומטית. אפשר להעלות קובץ אחר בכל שלב.";
+    initSettings();
+    const sel = saved.selections || {};
+    if (sel.track) $("#track-select").value = sel.track;
+    if (sel.year) $("#year-select").value = sel.year;
+    updateDynamicSelectors();
+    if (sel.spec && $("#spec-select")) $("#spec-select").value = sel.spec;
+    if (sel.project && $("#project-select")) $("#project-select").value = sel.project;
+    $("#settings-card").classList.remove("hidden");
+    $("#clear-transcript").classList.remove("hidden");
+    render();
+    return true;
+  }
+
   // כולל את שם הסטודנט/ית (מהתדפיס) כדי שסימונים ידניים של תדפיס אחד לא "ידבקו"
   // לתדפיס של מישהו אחר עם אותו מסלול/שנה - זו הייתה בעיה אמיתית שנתקלנו בה
   const storageSuffix = () => {
@@ -114,7 +151,9 @@
     if (parsed.warnings.length) showError(parsed.warnings.join(" "));
     initSettings();
     $("#settings-card").classList.remove("hidden");
+    $("#clear-transcript").classList.remove("hidden");
     render();
+    persistParsed();
     $("#settings-card").scrollIntoView({ behavior: "smooth" });
   }
 
@@ -162,8 +201,23 @@
     const yearKey = $("#year-select").value;
     const track = D.tracks[trackKey];
 
-    // התמחות (אזרחית)
-    $("#spec-wrap").classList.toggle("hidden", !(track && track.hasSpecialization));
+    // התמחות (אזרחית / מיפוי) - אפשרויות הבחירה נגזרות מתוך specializations
+    // של השנה/מסלול הנוכחיים, כדי שכל מסלול עם hasSpecialization יוכל להגדיר
+    // שמות/מפתחות משלו (לא רק "מים"/"תחבורה" הקבועים של אזרחית).
+    const specWrap = $("#spec-wrap");
+    const hasSpec = track && track.hasSpecialization && track.years[yearKey] && track.years[yearKey].specializations;
+    specWrap.classList.toggle("hidden", !hasSpec);
+    if (hasSpec) {
+      const ss = $("#spec-select");
+      const current = ss.value;
+      ss.innerHTML = "";
+      for (const [key, spec] of Object.entries(track.years[yearKey].specializations)) {
+        const o = el("option", null, esc(spec.name));
+        o.value = key;
+        ss.appendChild(o);
+      }
+      if ([...ss.options].some(o => o.value === current)) ss.value = current;
+    }
 
     // בחירת פרויקט (ניהול ובנייה)
     const pw = $("#project-wrap");
@@ -191,6 +245,7 @@
       if (!e.target.matches(sel)) return;
       if (sel === "#track-select" || sel === "#year-select") updateDynamicSelectors();
       render();
+      persistParsed();
     });
   });
   document.addEventListener("change", e => {
@@ -199,6 +254,23 @@
     saveOverrides();
     render();
   });
+
+  // מסלול/קטלוג/פרויקט + אילו מקצועות עברו (מזהים בלבד, לא ציונים) + סימונים
+  // ידניים - נשמר תחת מפתח משותף (לא תלוי בשם הסטודנט) כדי שדף תרשים הזרימה
+  // יוכל לקרוא אותו ולהישאר מסונכרן, בלי לשלוח שום דבר לשרת (הכול עדיין נשאר
+  // רק ב-localStorage של הדפדפן). התדפיס עצמו (ציונים) עדיין לא נשמר בשום מקום.
+  function syncFlowchart(trackKey, yearKey, projectKey, specialization) {
+    const passedIds = [...new Set(parsed.courses.filter(c => c.passed).map(c => c.id))];
+    // studentName כאן רק כדי שדף תרשים הזרימה יוכל לתייג את השמירה *שלו* (נעיצות
+    // וכו', STORE_KEY ב-flowchart.js) לפי שם - לא משנה את סמנטיקת "סנכרון החי"
+    // עצמה (עדיין מפתח אחד, לא תלוי-שם, בכוונה - ראו הערה למעלה).
+    // extras.manual (מקצועות "הוספת מקצוע" - שם חופשי, בלי מזהה קטלוגי, ראו
+    // renderGeneral/#mc-add למעלה) - בלי זה, תרשים הזרימה לא יודע שהם קיימים
+    // בכלל ולא יכול לצמצם לפיהם את בועות "כלל טכניוני"/"ח. גופני" (ראו
+    // REDUCIBLE_GENERAL_LABELS ב-flowchart.js).
+    localStorage.setItem("findeg_flowchart_sync",
+      JSON.stringify({ trackKey, yearKey, projectKey, specialization, passedIds, overrides, manual: extras.manual, studentName: parsed.studentName || null }));
+  }
 
   // ---------- רינדור ----------
   let openDetails = new Set();
@@ -209,6 +281,7 @@
     const trackKey = $("#track-select").value;
     const yearKey = $("#year-select").value;
     updateProjectNudge(trackKey);
+    syncFlowchart(trackKey, yearKey, $("#project-select") ? $("#project-select").value : "", $("#spec-select") ? $("#spec-select").value : "");
     const res = FINDEG_ENGINE.evaluate(parsed, trackKey, yearKey, {
       specialization: $("#spec-select").value,
       projectKey: $("#project-select") ? $("#project-select").value : null,
@@ -247,6 +320,7 @@
     root.appendChild(renderRegistrar(res)); // רישום ברשם המהנדסים - נפרד מדרישות התואר, ממש לפני הסיכום
     root.appendChild(renderSummary(res)); // עותק בתחתית העמוד, שלא יהיה צריך לגלול למעלה
     root.appendChild(renderMissingRoundup(res)); // תמצית "מה עוד חסר" - רק בתחתית
+    root.appendChild(renderFlowchartLink()); // כפתור מעבר לתרשים זרימה - ממש בתחתית העמוד
   }
 
   // איסוף כל הפערים הפתוחים מכל סעיף, לתמצית "מה עוד חסר" בתחתית העמוד
@@ -255,8 +329,8 @@
   // מפצל רשימת "חסרים" מעורבת (חלק מתוכנן, חלק לא נגעו בו כלל) לשתי תת-רשימות
   // לפי צבע, כל אחת עם המקצועות הרלוונטיים לה בלבד - כדי שלא תיפול תחת צבע אחד שגוי.
   function splitByPlanned(list, nameOf) {
-    const groups = { "": [], planned: [] };
-    for (const it of list) (it.planned ? groups.planned : groups[""]).push(it);
+    const groups = { "": [], planned: [], later: [] };
+    for (const it of list) (it.planned ? groups.planned : it.later ? groups.later : groups[""]).push(it);
     return Object.entries(groups)
       .filter(([, g]) => g.length)
       .map(([status, g]) => ({ status, names: g.map(nameOf) }));
@@ -264,10 +338,36 @@
 
   function computeMissing(res) {
     const items = [];
+    // מקבילה ל-splitByPlanned עבור דרישות "מאגר" (נק'/ספירה מתוך פול, לא רשימה
+    // בדידה): במקום שורה אחת מעורבת ("חסרות 12, מתוכן 10 מתוכננות") - שתי שורות
+    // נפרדות, בדיוק כמו שרשימת מקצועות בודדים כבר מפוצלת: אדום = מה שבאמת עוד לא
+    // טופל, כחול = מה שכבר מתוכנן ויסגור את זה.
+    function poolGapItems(covered, plannedAmount, laterAmount, needed, fmtRemaining, fmtPlanned, fmtLater) {
+      const gap = Math.max(0, needed - covered);
+      const effPlanned = Math.min(plannedAmount, gap);
+      const afterPlanned = gap - effPlanned;
+      const effLater = Math.min(laterAmount || 0, afterPlanned);
+      const stillMissing = afterPlanned - effLater;
+      const out = [];
+      if (stillMissing > 0) out.push({ status: "", detail: fmtRemaining(stillMissing) });
+      if (effLater > 0) out.push({ status: "later", detail: fmtLater(effLater) });
+      if (effPlanned > 0) out.push({ status: "planned", detail: fmtPlanned(effPlanned) });
+      return out;
+    }
+    // כמה מתוך "המחסור" בפול הזה מסומן ידנית "בהמשך" - לא נספר כ-hit ב-poolHits
+    // (בכוונה - זו לא התקדמות), אז צריך לסרוק את המחסור (misses) עצמו
+    function laterAmountFromMisses(misses, usePts) {
+      let amount = 0;
+      for (const id of misses) {
+        if (overrides[id] !== "later") continue;
+        amount += usePts ? (D.coursePoints[id] || 0) : 1;
+      }
+      return amount;
+    }
     for (const r of res.sections) {
       if (r.kind === "courses") {
         if (r.missing.length) {
-          for (const g of splitByPlanned(r.missing, m => cname(m.item.ids[0]))) {
+          for (const g of splitByPlanned(r.missing, m => m.item.name || cname(m.item.ids[0]))) {
             items.push({
               title: r.section.title,
               detail: g.names.join(", "),
@@ -276,17 +376,46 @@
           }
         }
       } else if (!r.satisfied) {
-        const detail = r.kind === "choosePoints"
-          ? "חסרות " + fmtPts(r.needed - r.pts) + " נק'"
-          : "חסר/ה עוד " + (r.needed - r.doneCount) + " מהרשימה";
         const b = poolBreakdown(r.hits, r.kind === "choosePoints");
-        items.push({ title: r.section.title, detail, anchor: "section_" + r.section.id, status: missingStatus(b.manual, b.planned) });
+        const covered = r.kind === "choosePoints" ? r.pts : r.doneCount;
+        const isPts = r.kind === "choosePoints";
+        const laterAmt = laterAmountFromMisses(r.misses, isPts);
+        for (const g of poolGapItems(covered, b.planned, laterAmt, r.needed,
+          n => isPts ? "חסרות " + fmtPts(n) + " נק'" : "חסר/ה עוד " + n + " מהרשימה",
+          n => isPts ? fmtPts(n) + " נק' מתוכננות" : n + " מתוכננים מהרשימה",
+          n => isPts ? fmtPts(n) + " נק' לבהמשך" : n + " לבהמשך מהרשימה")) {
+          items.push({ title: r.section.title, anchor: "section_" + r.section.id, ...g });
+        }
+      }
+    }
+    // שרשראות פתוחות (לא הושלמו) - נבדק בהמשך כדי לא להציג את קבוצה א'/א'+ב' כ"בעיה"
+    // נפרדת כשהיא בעצם אותה בעיה שכבר מוצגת ברמת השרשרת הספציפית (אותם מקצועות
+    // בדיוק נספרים גם וגם) - למשל דרישת "עוד מקצוע אחד" בשרשרת חומרים כבר סוגרת
+    // גם את הפער בקבוצה א' וגם בקבוצה א'+ב', אין טעם להציג את זה כשלוש בעיות.
+    const openChainPoolIds = new Set();
+    if (res.chains) {
+      for (const c of res.chains) {
+        if (c.chooseResult && !c.chooseResult.satisfied) {
+          for (const h of c.chooseResult.hits) openChainPoolIds.add(h.id);
+          for (const id of c.chooseResult.misses) openChainPoolIds.add(id);
+        }
       }
     }
     for (const gr of [res.groupA, res.groupAB]) {
       if (gr && !gr.satisfied) {
         const b = poolBreakdown(gr.hits, true);
-        items.push({ title: gr.section.title, detail: "חסרות " + fmtPts(gr.needed - gr.pts) + " נק'", anchor: "groupAB", status: missingStatus(b.manual, b.planned) });
+        const poolIds = [...gr.hits.map(h => h.id), ...gr.misses];
+        const coveredByOpenChain = poolIds.some(id => openChainPoolIds.has(id));
+        const laterAmt = laterAmountFromMisses(gr.misses, true);
+        for (const g of poolGapItems(gr.pts, b.planned, laterAmt, gr.needed,
+          n => "חסרות " + fmtPts(n) + " נק'",
+          n => fmtPts(n) + " נק' מתוכננות",
+          n => fmtPts(n) + " נק' לבהמשך")) {
+          // מדלגים על השורה האדומה (עוד לא טופל) אם היא כבר מיוצגת ע"י שרשרת פתוחה
+          // ספציפית יותר - נשארת רק אם יש בה תוכן חדש (למשל תוכנן) שלא מופיע שם
+          if (g.status === "" && coveredByOpenChain) continue;
+          items.push({ title: gr.section.title, anchor: "groupAB", ...g });
+        }
       }
     }
     if (res.chains) {
@@ -300,10 +429,13 @@
         }
         if (c.chooseResult && !c.chooseResult.satisfied) {
           const chb = poolBreakdown(c.chooseResult.hits, false);
-          items.push({
-            title: c.title, detail: "חסר/ה עוד " + (c.chooseResult.min - c.chooseResult.doneCount) + " מהרשימה",
-            anchor: "chain_" + c.key, status: missingStatus(chb.manual, chb.planned)
-          });
+          const laterAmt = laterAmountFromMisses(c.chooseResult.misses, false);
+          for (const g of poolGapItems(c.chooseResult.doneCount, chb.planned, laterAmt, c.chooseResult.min,
+            n => "חסר/ה עוד " + n + " מהרשימה",
+            n => n + " מתוכננים מהרשימה",
+            n => n + " לבהמשך מהרשימה")) {
+            items.push({ title: c.title, anchor: "chain_" + c.key, ...g });
+          }
         }
       }
     }
@@ -317,9 +449,9 @@
       }
       if (!(p.anyDone || (p.chosen && p.chosen.done))) {
         const chosenKey = p.chosen ? p.chosen.key : null;
-        const relevant = p.options.filter(o => o.row.counts.manual > 0 || o.row.counts.planned > 0 || chosenKey === o.key);
+        const relevant = p.options.filter(o => o.row.counts.manual > 0 || o.row.counts.planned > 0 || o.row.counts.later > 0 || chosenKey === o.key);
         if (relevant.length) {
-          for (const o of relevant) entries.push({ name: o.opt.label, status: missingStatus(o.row.counts.manual, o.row.counts.planned) });
+          for (const o of relevant) entries.push({ name: o.opt.label, status: missingStatus(o.row.counts.manual, o.row.counts.planned, o.row.counts.later) });
         } else {
           entries.push({ name: "פרויקט שני (טרם נבחר מהרשימה)", status: "" });
         }
@@ -332,15 +464,20 @@
     }
     for (const [key, b] of Object.entries(res.general.buckets)) {
       if (!b.satisfied) {
-        const missingPts = b.needed - b.pts;
-        const detail = key === "enrich"
-          ? "חסרים " + Math.ceil(missingPts / 2) + ' מקצועות מל"ג (' + fmtPts(missingPts) + " נק')"
-          : "חסרות " + fmtPts(missingPts) + " נק'";
         const bd = bucketBreakdown(b);
-        items.push({ title: "בחירה כלל-טכניונית - " + b.label, detail, anchor: "general", status: missingStatus(bd.manual, bd.planned) });
+        for (const g of poolGapItems(b.pts, bd.planned, bd.later, b.needed,
+          n => key === "enrich" ? "חסרים " + Math.ceil(n / 2) + ' מקצועות מל"ג (' + fmtPts(n) + " נק')" : "חסרות " + fmtPts(n) + " נק'",
+          n => fmtPts(n) + " נק' מתוכננות",
+          n => fmtPts(n) + " נק' לבהמשך")) {
+          items.push({ title: "בחירה כלל-טכניונית - " + b.label, anchor: "general", ...g });
+        }
       }
     }
-    return items;
+    // "בהמשך" ו"מתוכנן" מתמזגים לצבע/קבוצה אחת בתמצית הזו בלבד: שניהם אומרים
+    // "כבר התקבלה החלטה, לא בסיכון להישכח" - בניגוד למקצוע/בחירה שעדיין לא נגעו
+    // בהם כלל. ההבחנה בין "בקרוב" ל"בהמשך" עדיין מוצגת בכל שורת דרישה עצמה
+    // (התג הצהוב), רק לא בתמצית המרוכזת הזו.
+    return items.map(it => it.status === "later" ? { ...it, status: "planned" } : it);
   }
 
   function missingList(items) {
@@ -357,14 +494,29 @@
   // קיבוץ תמצית "מה עוד חסר" לפי צבע: כל הפריטים באותו צבע מבונים יחד (גם אם
   // הם חלק מאותה דרישה, כמו "מקצועות חובה" שמפוצל לכמה מקצועות מתוכננים וכמה
   // שלא נגעו בהם כלל) - כדי לא להטביע דחיפות אמיתית (אדום) בתוך דברים שכבר מטופלים.
+  // "planned" ("כבר בתוכנית") כולל גם מה שסומן "בהמשך" - ראו הנרמול בסוף
+  // computeMissing: ברמת התקציר הזה, "יתבצע בקרוב" ו"יתבצע בהמשך" הם אותו דבר
+  // (כבר התקבלה החלטה, לא בסיכון להישכח) - ההבדל ביניהם עדיין מוצג בכל שורת
+  // דרישה בנפרד, רק לא בקיבוץ המרוכז הזה.
   const MISSING_GROUPS = [
     { key: "", caption: "עדיין לא טופל" },
     { key: "manual", caption: "כבר סומן ידנית כהושלם - נשאר רק לוודא שיופיע בתדפיס" },
-    { key: "planned", caption: "כבר מתוכנן לסמסטרים קרובים" }
+    { key: "planned", caption: "כבר בתוכנית - מתוכנן לסמסטר קרוב או לביצוע בהמשך" }
   ];
 
-  // צבע המסגרת של כל הכרטיס = הצבע "הכי דחוף" מבין הפריטים: אדום (לא טופל) גרוע
-  // מכחול (מתוכנן), שגרוע מסגול (סומן ידנית), שגרוע מירוק (הכול הושלם).
+  // כפתור בתחתית העמוד למעבר לתרשים הזרימה - flowcharts.html כבר קורא את
+  // findeg_flowchart_sync (נשמר ב-syncFlowchart, ראו render למעלה) בטעינה,
+  // אז מסלול/קטלוג/פרויקט מסונכרנים אוטומטית, בלי צורך בפרמטרים ב-URL כאן.
+  function renderFlowchartLink() {
+    const card = el("section", "card flowchart-link-card");
+    const link = el("a", "add-btn", "🗺️ עבור לתרשים זרימה");
+    link.href = "flowcharts.html";
+    card.appendChild(link);
+    return card;
+  }
+
+  // צבע המסגרת של כל הכרטיס = הצבע "הכי דחוף" מבין הפריטים: אדום (לא טופל, היחיד
+  // שבאמת בסיכון להישכח) גרוע מכחול (כבר בתוכנית), שגרוע מסגול (סומן ידנית), שגרוע מירוק (הכול הושלם).
   function worstMissingColor(items) {
     if (!items.length) return "green";
     if (items.some(it => !it.status)) return "red";
@@ -398,14 +550,31 @@
   }
 
   // פס התקדמות מקוטע: ירוק=הושלם בפועל, סגול=סומן ידנית כהושלם, כחול=מתוכנן
-  function segBar(doneReal, manual, planned, total, big) {
+  // later (אופציונלי) - מקצועות שסומנו "בהמשך": נספרים כמקטע רביעי (צהוב,
+  // --later) בסרגל, אחרי "מתוכנן" - סימון "בהמשך" הוא עדיין התקדמות-תכנון
+  // שמכסה את הדרישה, רק רחוקה יותר, ובלי מקטע משלה הסרגל נראה כאילו הסימון
+  // "לא עשה כלום" (נתפס - בקשת המשתמש/ת, 2026-07-22: "מסמנים בהמשך וזה לא
+  // מתווסף למד - צריך להיות אינטואיטיבי").
+  function segBar(doneReal, manual, planned, total, big, later) {
     if (!total || total <= 0) return "";
     const pReal = Math.min(100, doneReal / total * 100);
     const pManual = Math.min(100 - pReal, manual / total * 100);
     const pPlanned = Math.min(100 - pReal - pManual, planned / total * 100);
+    const pLater = Math.min(100 - pReal - pManual - pPlanned, (later || 0) / total * 100);
     return '<div class="seg-bar' + (big ? " big" : "") + '"><div class="seg seg-done" style="width:' + pReal + '%"></div>' +
       '<div class="seg seg-manual" style="width:' + pManual + '%"></div>' +
-      '<div class="seg seg-planned" style="width:' + pPlanned + '%"></div></div>';
+      '<div class="seg seg-planned" style="width:' + pPlanned + '%"></div>' +
+      (pLater > 0 ? '<div class="seg seg-later" style="width:' + pLater + '%"></div>' : "") + '</div>';
+  }
+  // סכום ה"בהמשך" בתוך misses של מאגר (מקצועות שסומנו later נשארים ב-misses
+  // בכוונה - הם לא hit, ראו poolHits ב-engine.js - אז נאספים כאן מ-overrides)
+  function laterInMisses(missIds, usePts) {
+    return missIds.filter(id => overrides[id] === "later")
+      .reduce((s, id) => s + (usePts ? (D.coursePoints[id] || 0) : 1), 0);
+  }
+  // תג "(+N בהמשך)" ליד הסרגל/המונה, באותו סגנון כמו num-planned
+  function laterNote(later, usePts) {
+    return later > 0 ? ' <span class="num-later">(+' + (usePts ? fmtPts(later) + " נק'" : later) + " בהמשך)</span>" : "";
   }
   // פירוק hits (מ-poolHits) לשלוש הקבוצות, לפי ספירה או נק' (usePts)
   function poolBreakdown(hits, usePts) {
@@ -424,23 +593,24 @@
     }
     return { doneReal, manual, planned };
   }
-  // פירוק מקצועות סל (בחירה כלל-טכניונית) לפי נק' - הושלם בפועל/סומן ידנית/מתוכנן
+  // פירוק מקצועות סל (בחירה כלל-טכניונית) לפי נק' - הושלם בפועל/סומן ידנית/מתוכנן/בהמשך
   function bucketBreakdown(bucket) {
-    let doneReal = 0, manual = 0, planned = 0;
+    let doneReal = 0, manual = 0, planned = 0, later = 0;
     for (const c of bucket.courses) {
       if (c.planned) planned += c.pts;
+      else if (c.later) later += c.pts;
       else if (c.manualIndex !== undefined) manual += c.pts;
       else doneReal += c.pts;
     }
-    return { doneReal, manual, planned };
+    return { doneReal, manual, planned, later };
   }
-  // סטטוס-צבע לפי מה שכבר סומן על החוסר: אדום=לא נגעו, סגול=סומן ידנית כהושלם, כחול=מתוכנן
-  function missingStatus(manual, planned) {
+  // סטטוס-צבע לפי מה שכבר סומן על החוסר: אדום=לא נגעו, סגול=סומן ידנית כהושלם, כחול=מתוכנן, צהוב=בהמשך
+  function missingStatus(manual, planned, later) {
     if (manual > 0) return "manual";
     if (planned > 0) return "planned";
+    if (later > 0) return "later";
     return "";
   }
-
   function renderSummary(res) {
     const pct = Math.min(100, Math.round(res.points.credited / res.total * 100));
     // ספירת חובות חסרות
@@ -493,7 +663,11 @@
       const ids = row.item.ids;
       const ovDone = ids.some(id => overrides[id] === "done");
       const tr = el("tr", row.done ? "done" : (row.planned ? "planned-row" : ""));
-      const names = ids.map(id => esc(cname(id)) + " <small>(" + id.slice(2, 8) + ")</small>" + (row.done ? "" : semBadge(id))).join(" <b>או</b> ");
+      // item.name (אופציונלי) - שם מאוחד לשורה רב-קודית שהיא מקצוע אחד בפועל
+      // (כמו הפרויקט המורחב במבנים, חלק א'+ב') - במקום צירוף "א או ב" הארוך
+      const names = row.item.name
+        ? esc(row.item.name) + " <small>(" + ids.map(id => id.slice(2, 8)).join("+") + ")</small>" + (row.done ? "" : semBadge(ids[ids.length - 1]))
+        : ids.map(id => esc(cname(id)) + " <small>(" + id.slice(2, 8) + ")</small>" + (row.done ? "" : semBadge(id))).join(" <b>או</b> ");
       let statusHtml, btns;
       if (row.done && row.rec) {
         const g = row.rec.status === "exempt_credit" ? "פטור" :
@@ -550,11 +724,13 @@
     card.dataset.anchor = "section_" + r.section.id;
     const isPts = r.kind === "choosePoints";
     const progress = isPts ? fmtPts(r.pts) + " / " + fmtPts(r.needed) + " נק'" : r.doneCount + " / " + r.needed;
+    const poolLater = laterInMisses(r.misses, isPts);
     card.appendChild(el("div", "section-head",
       "<h2>" + esc(r.section.title) + "</h2>" +
       statusBadge(r.satisfied, isPts ? r.pts > 0 : r.hits.length > 0) +
-      ' <span class="badge ' + (r.satisfied ? "ok" : "part") + '">' + progress + "</span>"));
-    { const b = poolBreakdown(r.hits, isPts); card.appendChild(el("div", null, segBar(b.doneReal, b.manual, b.planned, r.needed))); }
+      ' <span class="badge ' + (r.satisfied ? "ok" : "part") + '">' + progress + "</span>" +
+      laterNote(poolLater, isPts)));
+    { const b = poolBreakdown(r.hits, isPts); card.appendChild(el("div", null, segBar(b.doneReal, b.manual, b.planned, r.needed, false, poolLater))); }
     if (r.section.note) card.appendChild(el("p", "section-note", esc(r.section.note)));
 
     const list = el("div", "pool-list");
@@ -582,10 +758,13 @@
       ") — סמנו מתוכנן (סמסטר קרוב) או הושלם (למשל פטור שאושר)</summary>";
     const ml = el("div", "pool-rows");
     for (const id of r.misses) {
-      const row = el("div", "pool-item-row");
+      const isLater = overrides[id] === "later";
+      const row = el("div", "pool-item-row" + (isLater ? " later" : ""));
       row.innerHTML = '<span class="pi-name">' + esc(cname(id)) +
-        " <small>(" + id.slice(2, 8) + " · " + fmtPts(D.coursePoints[id] || 0) + " נק')</small>" + semBadge(id) + "</span>" +
+        " <small>(" + id.slice(2, 8) + " · " + fmtPts(D.coursePoints[id] || 0) + " נק')</small>" + semBadge(id) +
+        (isLater ? ' <span class="status-later">🗓️ בהמשך</span>' : "") + "</span>" +
         '<span class="pi-actions"><button class="override-btn" data-ov-plan="' + id + '">מתוכנן</button>' +
+        '<button class="override-btn" data-ov-later="' + id + '">' + (isLater ? "בטל" : "בהמשך") + "</button>" +
         '<button class="override-btn" data-ov-done="' + id + '">הושלם</button></span>';
       ml.appendChild(row);
     }
@@ -646,10 +825,12 @@
       const cr = c.chooseResult;
       card.appendChild(el("div", "chain-caption", cr.min > 0 ? "בחירה" : "מקצועות נוספים (לא חובה)"));
       if (cr.min > 0) {
+        const plannedNote = cr.plannedCount ? ' <span class="num-planned">(+' + cr.plannedCount + " מתוכנן)</span>" : "";
+        const chainLater = laterInMisses(cr.misses, false);
         card.appendChild(el("p", "section-note",
-          statusBadge(cr.satisfied, cr.hits.length > 0) + " " + cr.doneCount + " / " + cr.min + " מהרשימה"));
+          statusBadge(cr.satisfied, cr.hits.length > 0) + " " + cr.doneCount + " / " + cr.min + " מהרשימה" + plannedNote + laterNote(chainLater, false)));
         const b = poolBreakdown(cr.hits, false);
-        card.appendChild(el("div", null, segBar(b.doneReal, b.manual, b.planned, cr.min)));
+        card.appendChild(el("div", null, segBar(b.doneReal, b.manual, b.planned, cr.min, false, chainLater)));
       } else if (cr.hits.length) {
         card.appendChild(el("p", "section-note", cr.hits.length + " מקצועות נוספים מהשרשרת נספרים בקבוצה א'"));
       }
@@ -676,10 +857,13 @@
       det.innerHTML = "<summary>מקצועות נוספים לבחירה (" + cr.misses.length + ")</summary>";
       const ml = el("div", "pool-rows");
       for (const id of cr.misses) {
-        const row = el("div", "pool-item-row");
+        const isLater = overrides[id] === "later";
+        const row = el("div", "pool-item-row" + (isLater ? " later" : ""));
         row.innerHTML = '<span class="pi-name">' + esc(cname(id)) +
-          " <small>(" + id.slice(2, 8) + " · " + fmtPts(D.coursePoints[id] || 0) + " נק')</small></span>" +
+          " <small>(" + id.slice(2, 8) + " · " + fmtPts(D.coursePoints[id] || 0) + " נק')</small>" +
+          (isLater ? ' <span class="status-later">🗓️ בהמשך</span>' : "") + "</span>" +
           '<span class="pi-actions"><button class="override-btn" data-ov-plan="' + id + '">מתוכנן</button>' +
+          '<button class="override-btn" data-ov-later="' + id + '">' + (isLater ? "בטל" : "בהמשך") + "</button>" +
           '<button class="override-btn" data-ov-done="' + id + '">הושלם</button></span>';
         ml.appendChild(row);
       }
@@ -693,7 +877,7 @@
   // כשיש כמה מקצועות באותו פרויקט ("mixed") והם במצבים שונים (אחד הושלם בפועל,
   // השני מתוכנן וכו') - לא בוחרים סטטוס אחד שגוי, אלא מציגים פילוג צבעים בתוך אותה
   // תגית סטטוס עצמה (לא מפצלים לשתי שורות/תיבות).
-  function projectRowHtml(row) {
+  function projectRowHtml(row, allowLater) {
     let statusHtml, btns;
     const idsStr = row.ids.join(",");
     if (row.mixed) {
@@ -702,9 +886,11 @@
       if (row.counts.real) parts.push('<span class="split-done">' + row.counts.real + "/" + n + " ✓</span>");
       if (row.counts.manual) parts.push('<span class="split-manual">' + row.counts.manual + "/" + n + " ✓ ידני</span>");
       if (row.counts.planned) parts.push('<span class="split-planned">' + row.counts.planned + "/" + n + " 🕒</span>");
+      if (allowLater && row.counts.later) parts.push('<span class="split-later">' + row.counts.later + "/" + n + " 🗓️</span>");
       if (row.counts.none) parts.push('<span class="split-none">' + row.counts.none + "/" + n + " ✗</span>");
       statusHtml = '<span class="status-split">' + parts.join(" + ") + "</span>";
       btns = '<button class="override-btn" data-ov-plan-multi="' + idsStr + '">סנכרן כמתוכנן</button> ' +
+        (allowLater ? '<button class="override-btn" data-ov-later-multi="' + idsStr + '">סנכרן כבהמשך</button> ' : "") +
         '<button class="override-btn" data-ov-done-multi="' + idsStr + '">סנכרן כהושלם</button>';
     } else if (row.done && row.rec && !row.manual) {
       const g = row.rec.status === "exempt_credit" ? "פטור" :
@@ -718,9 +904,13 @@
     } else if (row.planned) {
       statusHtml = '<span class="status-plan">🕒 בתכנון</span>';
       btns = '<button class="override-btn" data-ov-plan-multi="' + idsStr + '">בטל תכנון</button>';
+    } else if (allowLater && row.later) {
+      statusHtml = '<span class="status-later">🗓️ בהמשך</span>';
+      btns = '<button class="override-btn" data-ov-later-multi="' + idsStr + '">בטל</button>';
     } else {
       statusHtml = '<span class="status-miss">✗ חסר</span>';
       btns = '<button class="override-btn" data-ov-plan-multi="' + idsStr + '">בתכנון</button> ' +
+        (allowLater ? '<button class="override-btn" data-ov-later-multi="' + idsStr + '">בהמשך</button> ' : "") +
         '<button class="override-btn" data-ov-done-multi="' + idsStr + '">הושלם</button>';
     }
     return { statusHtml, btns };
@@ -728,9 +918,12 @@
 
   // כל פרויקט מקבל "סלוט" נפרד משלו (תיבה עצמאית) במקום שורת טבלה משותפת -
   // המקצוע חובה והמקצוע הנוסף שנבחר לא דומים מספיק כדי שכדאי לחלוק ביניהם עיצוב אחד.
-  function projectSlot(name, tag, row) {
-    const { statusHtml, btns } = projectRowHtml(row);
-    const slot = el("div", "project-slot" + (row.mixed ? " mixed" : row.done ? " done" : row.planned ? " planned" : ""));
+  // allowLater=false לפרויקט החובה (חובה לכולם, "בהמשך" חסר משמעות שם - ראו
+  // evalCoursesSection) - true לפרויקט השני שנבחר מרשימה, שם זו בחירה אמיתית.
+  function projectSlot(name, tag, row, allowLater) {
+    const { statusHtml, btns } = projectRowHtml(row, allowLater);
+    const later = allowLater && row.later;
+    const slot = el("div", "project-slot" + (row.mixed ? " mixed" : row.done ? " done" : row.planned ? " planned" : later ? " later" : ""));
     slot.innerHTML =
       '<div class="project-slot-row"><span class="cname">' + esc(name) +
       (tag ? ' <span class="badge part">' + esc(tag) + "</span>" : "") + "</span>" +
@@ -748,15 +941,15 @@
       "<h2>פרויקטים</h2>" + statusBadge(ok, p.mandatory.done || p.anyDone)));
 
     const list = el("div", "project-list");
-    list.appendChild(projectSlot(cname(p.mandatory.item.ids[0]), "חובה לכולם", p.mandatory));
+    list.appendChild(projectSlot(cname(p.mandatory.item.ids[0]), "חובה לכולם", p.mandatory, false));
 
     // מציגים רק את הפרויקט שנבחר בתפריט, או כאלה שכבר הושלמו/מתוכננים בפועל -
     // לא את כל התפריט (בדומה לשרשראות: לא מציגים אפשרויות שלא נגעו בהן)
     const chosenKey = p.chosen ? p.chosen.key : null;
-    const relevant = p.options.filter(o => o.row.done || o.row.planned || chosenKey === o.key);
+    const relevant = p.options.filter(o => o.row.done || o.row.planned || o.row.later || chosenKey === o.key);
     for (const o of relevant) {
       const tag = chosenKey === o.key && !o.row.done ? "נבחר בתפריט" : null;
-      list.appendChild(projectSlot(o.opt.label, tag, o.row));
+      list.appendChild(projectSlot(o.opt.label, tag, o.row, true));
     }
     card.appendChild(list);
     if (!relevant.length) {
@@ -776,11 +969,13 @@
       { label: "קבוצה א'+ב' (סה\"כ)", r: res.groupAB }
     ]) {
       const b = poolBreakdown(r.hits, true);
+      const plannedNote = r.plannedPts ? ' <span class="num-planned">(+' + fmtPts(r.plannedPts) + " מתוכנן)</span>" : "";
+      const gabLater = laterInMisses(r.misses, true);
       const row = el("div", "gab-row");
       row.innerHTML = '<div class="gab-label"><span>' + esc(label) + "</span>" +
         statusBadge(r.satisfied, r.pts > 0) +
-        ' <span class="badge ' + (r.satisfied ? "ok" : "part") + '">' + fmtPts(r.pts) + " / " + fmtPts(r.needed) + " נק'</span></div>" +
-        segBar(b.doneReal, b.manual, b.planned, r.needed);
+        ' <span class="badge ' + (r.satisfied ? "ok" : "part") + '">' + fmtPts(r.pts) + " / " + fmtPts(r.needed) + " נק'</span>" + plannedNote + laterNote(gabLater, true) + "</div>" +
+        segBar(b.doneReal, b.manual, b.planned, r.needed, false, gabLater);
       card.appendChild(row);
     }
     return card;
@@ -815,10 +1010,13 @@
     }
     const ml = el("div", "pool-rows");
     for (const id of oc.misses) {
-      const row = el("div", "pool-item-row");
+      const isLater = overrides[id] === "later";
+      const row = el("div", "pool-item-row" + (isLater ? " later" : ""));
       row.innerHTML = '<span class="pi-name">' + esc(cname(id)) +
-        " <small>(" + id.slice(2, 8) + " · " + fmtPts(D.coursePoints[id] || 0) + " נק')</small>" + semBadge(id) + "</span>" +
+        " <small>(" + id.slice(2, 8) + " · " + fmtPts(D.coursePoints[id] || 0) + " נק')</small>" + semBadge(id) +
+        (isLater ? ' <span class="status-later">🗓️ בהמשך</span>' : "") + "</span>" +
         '<span class="pi-actions"><button class="override-btn" data-ov-plan="' + id + '">מתוכנן</button>' +
+        '<button class="override-btn" data-ov-later="' + id + '">' + (isLater ? "בטל" : "בהמשך") + "</button>" +
         '<button class="override-btn" data-ov-done="' + id + '">הושלם</button></span>';
       ml.appendChild(row);
     }
@@ -854,7 +1052,8 @@
       const parts = ['<b class="num-done">' + fmtPts(bd.doneReal) + "</b>"];
       if (bd.manual > 0) parts.push('<b class="num-manual">' + fmtPts(bd.manual) + "</b>");
       if (bd.planned > 0) parts.push('<b class="num-planned">' + fmtPts(bd.planned) + "</b>");
-      // "מלא" גם אם רק התכנון מביא לסך הנדרש - זה עדיין סימן שהמסלול מכוסה
+      if (bd.later > 0) parts.push('<b class="num-later">' + fmtPts(bd.later) + "</b>");
+      // "מלא" גם אם רק התכנון מביא לסך הנדרש - זה עדיין סימן שהמסלול מכוסה (לא כולל "בהמשך" - זה לא באמת תוכנן קרוב)
       const covered = bd.doneReal + bd.manual + bd.planned >= b.needed;
       bucketsRow.appendChild(el("div", "gen-bucket" + (covered ? " full" : ""),
         "<b>" + esc(b.label) + "</b><span>" + parts.join(" + ") + " / " + fmtPts(b.needed) + " נק'</span>"));
@@ -876,6 +1075,9 @@
             catSelect(key, "data-cat", c.id);
         } else if (c.planned) {
           row.innerHTML = '<span class="status-plan">🕒 ' + esc(c.name) + " (" + fmtPts(c.pts) + " נק') <small>מתוכנן · נוסף ידנית</small></span>" +
+            '<button class="override-btn" data-del-manual="' + c.manualIndex + '">הסר</button>';
+        } else if (c.later) {
+          row.innerHTML = '<span class="status-later">🗓️ ' + esc(c.name) + " (" + fmtPts(c.pts) + " נק') <small>בהמשך · נוסף ידנית</small></span>" +
             '<button class="override-btn" data-del-manual="' + c.manualIndex + '">הסר</button>';
         } else {
           row.innerHTML = '<span class="status-manual">✓ ' + esc(c.name) + " (" + fmtPts(c.pts) + " נק') <small>הושלם - סימון ידני · נוסף ידנית</small></span>" +
@@ -899,6 +1101,7 @@
       '<select id="mc-status">' +
       '<option value="done">הושלם</option>' +
       '<option value="planned">מתוכנן</option>' +
+      '<option value="later">בהמשך</option>' +
       "</select>" +
       '<button id="mc-add" class="add-btn">הוסף</button>' +
       "</div>";
@@ -962,9 +1165,12 @@
 
     if (rb.electiveResult) {
       const er = rb.electiveResult;
+      // misses כאן הם אובייקטים {id,label,pts} (רשם המהנדסים, לא ids גולמיים) -
+      // סכימת ה"בהמשך" ידנית ולא דרך laterInMisses
+      const regLater = er.misses.filter(p => overrides[p.id] === "later").reduce((s, p) => s + (p.pts || 0), 0);
       wrap.appendChild(el("div", "chain-caption", "מקצועות בחירה"));
       wrap.appendChild(el("p", "section-note",
-        statusBadge(er.satisfied, er.pts > 0) + " " + fmtPts(er.pts) + " / " + fmtPts(er.needed) + " נק'"));
+        statusBadge(er.satisfied, er.pts > 0) + " " + fmtPts(er.pts) + " / " + fmtPts(er.needed) + " נק'" + laterNote(regLater, true)));
       if (er.untracked && er.untracked.length) {
         const broad = er.untracked.filter(u => u.broad).map(u => u.label);
         const specific = er.untracked.filter(u => !u.broad).map(u => u.label);
@@ -976,7 +1182,7 @@
           "יש לוודא מול הפקולטה: " + esc(specific.join(", "))));
       }
       const b = poolBreakdown(er.hits, true);
-      wrap.appendChild(el("div", null, segBar(b.doneReal, b.manual, b.planned, er.needed)));
+      wrap.appendChild(el("div", null, segBar(b.doneReal, b.manual, b.planned, er.needed, false, regLater)));
       const list = el("div", "pool-list");
       for (const h of er.hits) {
         const pts = " (" + fmtPts(h.rec.pts || 0) + " נק')";
@@ -995,9 +1201,12 @@
       wrap.appendChild(list);
       const ml = el("div", "pool-rows");
       for (const p of er.misses) {
-        const row = el("div", "pool-item-row");
-        row.innerHTML = '<span class="pi-name">' + esc(p.label) + " <small>(" + fmtPts(p.pts) + " נק')</small>" + semBadge(p.id) + "</span>" +
+        const isLater = overrides[p.id] === "later";
+        const row = el("div", "pool-item-row" + (isLater ? " later" : ""));
+        row.innerHTML = '<span class="pi-name">' + esc(p.label) + " <small>(" + fmtPts(p.pts) + " נק')</small>" + semBadge(p.id) +
+          (isLater ? ' <span class="status-later">🗓️ בהמשך</span>' : "") + "</span>" +
           '<span class="pi-actions"><button class="override-btn" data-ov-plan="' + p.id + '">מתוכנן</button>' +
+          '<button class="override-btn" data-ov-later="' + p.id + '">' + (isLater ? "בטל" : "בהמשך") + "</button>" +
           '<button class="override-btn" data-ov-done="' + p.id + '">הושלם</button></span>';
         ml.appendChild(row);
       }
@@ -1059,6 +1268,15 @@
       render();
       return;
     }
+    const laterMultiBtn = e.target.closest("[data-ov-later-multi]");
+    if (laterMultiBtn) {
+      const ids = laterMultiBtn.dataset.ovLaterMulti.split(",");
+      const allLater = ids.every(id => overrides[id] === "later");
+      ids.forEach(id => { if (allLater) delete overrides[id]; else overrides[id] = "later"; });
+      saveOverrides();
+      render();
+      return;
+    }
     const doneMultiBtn = e.target.closest("[data-ov-done-multi]");
     if (doneMultiBtn) {
       const ids = doneMultiBtn.dataset.ovDoneMulti.split(",");
@@ -1073,6 +1291,15 @@
       const id = planBtn.dataset.ovPlan;
       if (overrides[id] === "planned") delete overrides[id];
       else overrides[id] = "planned";
+      saveOverrides();
+      render();
+      return;
+    }
+    const laterBtn = e.target.closest("[data-ov-later]");
+    if (laterBtn) {
+      const id = laterBtn.dataset.ovLater;
+      if (overrides[id] === "later") delete overrides[id];
+      else overrides[id] = "later";
       saveOverrides();
       render();
       return;
@@ -1115,12 +1342,27 @@
     render();
   });
 
+  $("#clear-transcript").addEventListener("click", () => {
+    if (!confirm("לנקות את התדפיס שנטען ולהתחיל מחדש?")) return;
+    localStorage.removeItem(LAST_PARSE_KEY);
+    parsed = null;
+    fi.value = "";
+    $("#dz-text").textContent = "גרירת קובץ PDF לכאן / לחיצה לבחירה";
+    $("#settings-card").classList.add("hidden");
+    $("#results").classList.add("hidden");
+    $("#results").innerHTML = "";
+    $("#parse-error").classList.add("hidden");
+    $("#clear-transcript").classList.add("hidden");
+  });
+
   // מצב בדיקה: ?test=<url של pdf>. אם המשתמש כבר העלה קובץ ידנית בזמן שהבקשה
   // הזו עדיין רצה ברקע - לא דורסים את מה שהוא העלה.
   const testUrl = new URLSearchParams(location.search).get("test");
   if (testUrl) {
     fetch(testUrl).then(r => r.arrayBuffer()).then(b => { if (!parsed) loadFromBuffer(b, testUrl.split("/").pop()); })
       .catch(err => showError("טעינת קובץ הבדיקה נכשלה: " + err.message));
+  } else {
+    restoreLastParse();
   }
   window.findegLoadUrl = url =>
     fetch(url).then(r => r.arrayBuffer()).then(b => loadFromBuffer(b, url.split("/").pop()));

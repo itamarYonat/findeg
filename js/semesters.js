@@ -63,6 +63,13 @@ window.FINDEG_SEMESTERS = {
       "spring"
     ]
   },
+  "00140101": {
+    "confirmed": false,
+    "seasons": [
+      "winter",
+      "spring"
+    ]
+  },
   "00140107": {
     "confirmed": true,
     "seasons": [
@@ -76,14 +83,16 @@ window.FINDEG_SEMESTERS = {
     ]
   },
   "00140131": {
-    "confirmed": true,
+    "confirmed": false,
     "seasons": [
+      "winter",
       "spring"
     ]
   },
   "00140132": {
-    "confirmed": true,
+    "confirmed": false,
     "seasons": [
+      "winter",
       "spring"
     ]
   },
@@ -132,6 +141,7 @@ window.FINDEG_SEMESTERS = {
   "00140151": {
     "confirmed": false,
     "seasons": [
+      "winter",
       "spring"
     ]
   },
@@ -139,6 +149,12 @@ window.FINDEG_SEMESTERS = {
     "confirmed": true,
     "seasons": [
       "spring"
+    ]
+  },
+  "00140163": {
+    "confirmed": false,
+    "seasons": [
+      "winter"
     ]
   },
   "00140201": {
@@ -151,6 +167,7 @@ window.FINDEG_SEMESTERS = {
   "00140202": {
     "confirmed": false,
     "seasons": [
+      "winter",
       "spring"
     ]
   },
@@ -172,10 +189,29 @@ window.FINDEG_SEMESTERS = {
       "winter"
     ]
   },
+  "00140302": {
+    "confirmed": false,
+    "seasons": [
+      "winter",
+      "spring"
+    ]
+  },
   "00140305": {
     "confirmed": false,
     "seasons": [
       "winter"
+    ]
+  },
+  "00140309": {
+    "confirmed": true,
+    "seasons": [
+      "winter"
+    ]
+  },
+  "00140313": {
+    "confirmed": false,
+    "seasons": [
+      "spring"
     ]
   },
   "00140316": {
@@ -183,6 +219,12 @@ window.FINDEG_SEMESTERS = {
     "seasons": [
       "winter",
       "spring"
+    ]
+  },
+  "00140321": {
+    "confirmed": true,
+    "seasons": [
+      "winter"
     ]
   },
   "00140325": {
@@ -198,6 +240,12 @@ window.FINDEG_SEMESTERS = {
     ]
   },
   "00140332": {
+    "confirmed": false,
+    "seasons": [
+      "spring"
+    ]
+  },
+  "00140333": {
     "confirmed": false,
     "seasons": [
       "spring"
@@ -241,6 +289,13 @@ window.FINDEG_SEMESTERS = {
       "spring"
     ]
   },
+  "00140504": {
+    "confirmed": false,
+    "seasons": [
+      "winter",
+      "spring"
+    ]
+  },
   "00140505": {
     "confirmed": true,
     "seasons": [
@@ -269,6 +324,13 @@ window.FINDEG_SEMESTERS = {
   "00140600": {
     "confirmed": false,
     "seasons": [
+      "spring"
+    ]
+  },
+  "00140601": {
+    "confirmed": false,
+    "seasons": [
+      "winter",
       "spring"
     ]
   },
@@ -320,7 +382,7 @@ window.FINDEG_SEMESTERS = {
   "00140619": {
     "confirmed": true,
     "seasons": [
-      "spring"
+      "winter"
     ]
   },
   "00140621": {
@@ -365,9 +427,24 @@ window.FINDEG_SEMESTERS = {
       "winter"
     ]
   },
-  "00140721": {
-    "confirmed": true,
+  "00140719": {
+    "confirmed": false,
     "seasons": [
+      "winter",
+      "spring"
+    ]
+  },
+  "00140720": {
+    "confirmed": false,
+    "seasons": [
+      "winter",
+      "spring"
+    ]
+  },
+  "00140721": {
+    "confirmed": false,
+    "seasons": [
+      "winter",
       "spring"
     ]
   },
@@ -379,9 +456,17 @@ window.FINDEG_SEMESTERS = {
     ]
   },
   "00140723": {
-    "confirmed": true,
+    "confirmed": false,
     "seasons": [
-      "winter"
+      "winter",
+      "spring"
+    ]
+  },
+  "00140724": {
+    "confirmed": false,
+    "seasons": [
+      "winter",
+      "spring"
     ]
   },
   "00140725": {
@@ -397,6 +482,12 @@ window.FINDEG_SEMESTERS = {
     ]
   },
   "00140728": {
+    "confirmed": true,
+    "seasons": [
+      "winter"
+    ]
+  },
+  "00140730": {
     "confirmed": true,
     "seasons": [
       "winter"
@@ -432,11 +523,41 @@ window.FINDEG_SEMESTERS = {
       "spring"
     ]
   },
+  "00140814": {
+    "confirmed": true,
+    "seasons": [
+      "spring"
+    ]
+  },
+  "00140829": {
+    "confirmed": true,
+    "seasons": [
+      "winter"
+    ]
+  },
+  "00140831": {
+    "confirmed": true,
+    "seasons": [
+      "summer"
+    ]
+  },
   "00140841": {
     "confirmed": true,
     "seasons": [
       "winter",
       "spring"
+    ]
+  },
+  "00140842": {
+    "confirmed": true,
+    "seasons": [
+      "winter"
+    ]
+  },
+  "00140843": {
+    "confirmed": true,
+    "seasons": [
+      "winter"
     ]
   },
   "00140845": {
@@ -451,10 +572,154 @@ window.FINDEG_SEMESTERS = {
       "winter"
     ]
   },
+  "00140848": {
+    "confirmed": true,
+    "seasons": [
+      "winter"
+    ]
+  },
+  "00140849": {
+    "confirmed": true,
+    "seasons": [
+      "spring"
+    ]
+  },
+  "00140851": {
+    "confirmed": true,
+    "seasons": [
+      "winter"
+    ]
+  },
+  "00140852": {
+    "confirmed": false,
+    "seasons": [
+      "spring"
+    ]
+  },
+  "00140853": {
+    "confirmed": true,
+    "seasons": [
+      "spring"
+    ]
+  },
+  "00140855": {
+    "confirmed": false,
+    "seasons": [
+      "winter"
+    ]
+  },
+  "00140856": {
+    "confirmed": false,
+    "seasons": [
+      "spring"
+    ]
+  },
   "00140857": {
     "confirmed": false,
     "seasons": [
       "spring"
+    ]
+  },
+  "00140859": {
+    "confirmed": true,
+    "seasons": [
+      "spring"
+    ]
+  },
+  "00140866": {
+    "confirmed": false,
+    "seasons": [
+      "winter",
+      "spring"
+    ]
+  },
+  "00140867": {
+    "confirmed": false,
+    "seasons": [
+      "winter",
+      "spring"
+    ]
+  },
+  "00140868": {
+    "confirmed": false,
+    "seasons": [
+      "winter",
+      "spring"
+    ]
+  },
+  "00140869": {
+    "confirmed": false,
+    "seasons": [
+      "winter",
+      "spring"
+    ]
+  },
+  "00140875": {
+    "confirmed": false,
+    "seasons": [
+      "winter",
+      "spring"
+    ]
+  },
+  "00140876": {
+    "confirmed": false,
+    "seasons": [
+      "winter",
+      "spring"
+    ]
+  },
+  "00140877": {
+    "confirmed": true,
+    "seasons": [
+      "spring"
+    ]
+  },
+  "00140878": {
+    "confirmed": true,
+    "seasons": [
+      "spring"
+    ]
+  },
+  "00140879": {
+    "confirmed": true,
+    "seasons": [
+      "winter"
+    ]
+  },
+  "00140881": {
+    "confirmed": true,
+    "seasons": [
+      "spring"
+    ]
+  },
+  "00140882": {
+    "confirmed": false,
+    "seasons": [
+      "spring"
+    ]
+  },
+  "00140885": {
+    "confirmed": false,
+    "seasons": [
+      "winter"
+    ]
+  },
+  "00140888": {
+    "confirmed": true,
+    "seasons": [
+      "spring"
+    ]
+  },
+  "00140889": {
+    "confirmed": false,
+    "seasons": [
+      "spring"
+    ]
+  },
+  "00140890": {
+    "confirmed": false,
+    "seasons": [
+      "winter"
     ]
   },
   "00140935": {
@@ -499,6 +764,13 @@ window.FINDEG_SEMESTERS = {
       "spring"
     ]
   },
+  "00140966": {
+    "confirmed": false,
+    "seasons": [
+      "winter",
+      "spring"
+    ]
+  },
   "00140972": {
     "confirmed": false,
     "seasons": [
@@ -509,6 +781,30 @@ window.FINDEG_SEMESTERS = {
     "confirmed": true,
     "seasons": [
       "winter"
+    ]
+  },
+  "00140978": {
+    "confirmed": true,
+    "seasons": [
+      "winter"
+    ]
+  },
+  "00140979": {
+    "confirmed": false,
+    "seasons": [
+      "spring"
+    ]
+  },
+  "00150001": {
+    "confirmed": false,
+    "seasons": [
+      "spring"
+    ]
+  },
+  "00150007": {
+    "confirmed": true,
+    "seasons": [
+      "spring"
     ]
   },
   "00150017": {
@@ -579,10 +875,46 @@ window.FINDEG_SEMESTERS = {
       "spring"
     ]
   },
+  "00160303": {
+    "confirmed": false,
+    "seasons": [
+      "spring"
+    ]
+  },
+  "00160304": {
+    "confirmed": false,
+    "seasons": [
+      "winter"
+    ]
+  },
   "00160306": {
     "confirmed": false,
     "seasons": [
       "spring"
+    ]
+  },
+  "00160329": {
+    "confirmed": true,
+    "seasons": [
+      "winter"
+    ]
+  },
+  "00160336": {
+    "confirmed": false,
+    "seasons": [
+      "winter"
+    ]
+  },
+  "00160338": {
+    "confirmed": false,
+    "seasons": [
+      "winter"
+    ]
+  },
+  "00160339": {
+    "confirmed": false,
+    "seasons": [
+      "winter"
     ]
   },
   "00160421": {
@@ -592,10 +924,9 @@ window.FINDEG_SEMESTERS = {
     ]
   },
   "00160503": {
-    "confirmed": true,
+    "confirmed": false,
     "seasons": [
-      "winter",
-      "spring"
+      "winter"
     ]
   },
   "00160504": {
@@ -605,6 +936,12 @@ window.FINDEG_SEMESTERS = {
     ]
   },
   "00160505": {
+    "confirmed": false,
+    "seasons": [
+      "winter"
+    ]
+  },
+  "00160512": {
     "confirmed": false,
     "seasons": [
       "winter"
@@ -640,15 +977,149 @@ window.FINDEG_SEMESTERS = {
       "spring"
     ]
   },
+  "00160801": {
+    "confirmed": false,
+    "seasons": [
+      "winter"
+    ]
+  },
+  "00160815": {
+    "confirmed": false,
+    "seasons": [
+      "spring"
+    ]
+  },
+  "00160818": {
+    "confirmed": false,
+    "seasons": [
+      "spring"
+    ]
+  },
+  "00160819": {
+    "confirmed": false,
+    "seasons": [
+      "winter"
+    ]
+  },
+  "00160820": {
+    "confirmed": false,
+    "seasons": [
+      "spring"
+    ]
+  },
+  "00160828": {
+    "confirmed": true,
+    "seasons": [
+      "winter"
+    ]
+  },
+  "00160829": {
+    "confirmed": false,
+    "seasons": [
+      "spring"
+    ]
+  },
+  "00160833": {
+    "confirmed": false,
+    "seasons": [
+      "spring"
+    ]
+  },
+  "00160834": {
+    "confirmed": false,
+    "seasons": [
+      "winter"
+    ]
+  },
   "00160837": {
     "confirmed": true,
     "seasons": [
       "winter"
     ]
   },
+  "00170001": {
+    "confirmed": false,
+    "seasons": [
+      "spring"
+    ]
+  },
   "00170012": {
     "confirmed": false,
     "seasons": [
+      "spring"
+    ]
+  },
+  "00340035": {
+    "confirmed": true,
+    "seasons": [
+      "winter",
+      "spring"
+    ]
+  },
+  "00540203": {
+    "confirmed": true,
+    "seasons": [
+      "spring"
+    ]
+  },
+  "00540310": {
+    "confirmed": true,
+    "seasons": [
+      "winter"
+    ]
+  },
+  "00540314": {
+    "confirmed": true,
+    "seasons": [
+      "winter"
+    ]
+  },
+  "00540316": {
+    "confirmed": true,
+    "seasons": [
+      "winter"
+    ]
+  },
+  "00540323": {
+    "confirmed": false,
+    "seasons": [
+      "spring"
+    ]
+  },
+  "00540374": {
+    "confirmed": true,
+    "seasons": [
+      "spring"
+    ]
+  },
+  "00540400": {
+    "confirmed": true,
+    "seasons": [
+      "spring"
+    ]
+  },
+  "00540410": {
+    "confirmed": false,
+    "seasons": [
+      "spring"
+    ]
+  },
+  "00540452": {
+    "confirmed": true,
+    "seasons": [
+      "winter"
+    ]
+  },
+  "00540478": {
+    "confirmed": true,
+    "seasons": [
+      "spring"
+    ]
+  },
+  "00560379": {
+    "confirmed": false,
+    "seasons": [
+      "winter",
       "spring"
     ]
   },
@@ -658,7 +1129,21 @@ window.FINDEG_SEMESTERS = {
       "spring"
     ]
   },
+  "00940219": {
+    "confirmed": true,
+    "seasons": [
+      "winter",
+      "spring"
+    ]
+  },
   "00940241": {
+    "confirmed": true,
+    "seasons": [
+      "winter",
+      "spring"
+    ]
+  },
+  "00940314": {
     "confirmed": true,
     "seasons": [
       "winter",
@@ -672,11 +1157,24 @@ window.FINDEG_SEMESTERS = {
       "spring"
     ]
   },
+  "00940594": {
+    "confirmed": true,
+    "seasons": [
+      "winter",
+      "summer"
+    ]
+  },
   "00960411": {
     "confirmed": true,
     "seasons": [
       "winter",
       "spring"
+    ]
+  },
+  "00960553": {
+    "confirmed": false,
+    "seasons": [
+      "winter"
     ]
   },
   "01030015": {
@@ -777,10 +1275,22 @@ window.FINDEG_SEMESTERS = {
       "summer"
     ]
   },
+  "01240120": {
+    "confirmed": true,
+    "seasons": [
+      "winter"
+    ]
+  },
   "01240503": {
     "confirmed": true,
     "seasons": [
       "winter"
+    ]
+  },
+  "01240801": {
+    "confirmed": true,
+    "seasons": [
+      "spring"
     ]
   },
   "01250001": {
@@ -788,6 +1298,21 @@ window.FINDEG_SEMESTERS = {
     "seasons": [
       "winter",
       "spring"
+    ]
+  },
+  "01340019": {
+    "confirmed": true,
+    "seasons": [
+      "winter",
+      "spring"
+    ]
+  },
+  "01340058": {
+    "confirmed": true,
+    "seasons": [
+      "winter",
+      "spring",
+      "summer"
     ]
   },
   "02050598": {
