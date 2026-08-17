@@ -309,6 +309,15 @@
     if (!sync || sync.trackKey !== trackKey) return new Set();
     const done = new Set(sync.passedIds || []);
     for (const [id, status] of Object.entries(sync.overrides || {})) if (status === "done") done.add(id);
+    // הרחבה דרך שקילות קוד ישן/חדש (equivSet, engine.js) - בלעדיה מקצוע
+    // שהושלם בפועל תחת קוד אחד (למשל התדפיס עדיין מפנה לקוד ישן) לא היה
+    // מסומן "הושלם" כאן אם התרשים מציג אותו תחת הקוד המקביל/החדש - בדיוק
+    // אותה שקילות ש-FINDEG_ENGINE.evaluate כבר מכבד בכל מקום אחר (תכנון
+    // אופטימלי/ידני, FinDeg עצמו - שניהם עוברים דרך המנוע). "המסלול המומלץ"
+    // לבדו פספס אותה כי הפונקציה הזו בדיקת-קיום גולמית על sync.passedIds,
+    // לא עוברת דרך המנוע כלל (נתפס - בקשת המשתמש/ת, 2026-07-25: "done"
+    // מ"מקצועות מקבילים" לא עבר לתצוגה הזו, בניגוד לכל שאר התצוגות).
+    for (const id of [...done]) for (const e of FINDEG_ENGINE.equivSet(id)) done.add(e);
     return done;
   }
 
@@ -570,15 +579,20 @@
   let criticalEdges = new Set();
   let criticalSpan = 0;
   let doneIds = new Set();
-  // התוכנית האחרונה שחושבה בפועל בתצוגת "תכנון אופטימלי" (plan + semOffset,
-  // לא רק criticalNodes/doneIds) - נשמרת כדי שה-drop handler הכללי (למטה)
-  // יוכל "להקפיא" את המיקום הנוכחי של כל שאר המקצועות ברגע שגוררים אחד מהם,
-  // לפני שהוא דורס את hardPins ומריץ renderCurrent מחדש. בלי זה, גרירת מקצוע
-  // בודד הייתה מפעילה מחדש את כל שלבי האיזון/הקיבולת על כל השאר - "רה-אופטימיזציה"
-  // של דברים שהמשתמש/ת לא נגע/ה בהם כלל, במקום סתם לתת לגרירה לקרות (בקשת
-  // המשתמש/ת, 2026-07-24: "it shouldn't try to re-optimize it, it should
-  // just let it change").
-  let lastOptimizerPlan = null, lastOptimizerSemOffset = 0;
+  // "תכנון אופטימלי" (fc-opt-page): התוכנית ה"מוקפאת" הנוכחית - הפלט המלא
+  // האחרון של FINDEG_OPTIMIZER.computePlan (plan/pointsById/generalNames/
+  // notes/planAnchorSemester וכו'), *לא* מחושבת מחדש בכל render. null = "צריך
+  // לחשב מחדש" (ביקור ראשון/אחרי הרצה מפורשת/איפוס/שינוי מסלול). גרירה
+  // (drop handler למטה) עורכת אותה *ישירות* (מזיזה id בין מערכי ids של
+  // סמסטרים) בלי לגעת ב-computePlan בכלל ובלי לאפס אותה - כך שגרירת מקצוע
+  // בודד לא "מריצה מחדש" שום איזון/קיבולת על מה שלא נגעו בו, ובניגוד לגרסה
+  // הקודמת (נעיצה-קשיחה-לכולם) גם לא מסמנת את כולם כ"נעוץ" (בקשת המשתמש/ת,
+  // 2026-07-25: "the function for re-organizing a flowchart should only
+  // rerun when clicking on the run, reset, or refreshing the page" - לא
+  // מתמשך בין רענוני-דף בכוונה, ראו שלא נשמרת ב-saveState/loadState).
+  // כוונתית לא נשמרת ל-localStorage - "רענון דף" הוא אחד משלושת הטריגרים
+  // המותרים להרצה מחדש, אז חייבת "להישכח" ברענון.
+  let materializedPlan = null;
   // id (gen_pe_1/gen_enrich_2 וכו') -> תווית תצוגה ("מל\"ג 2") למקצועות
   // ספורט/מל"ג/בחירה חופשית סינתטיים בתצוגות "תכנון אופטימלי"/"תכנון ידני"
   // (ראו FINDEG_OPTIMIZER.computePlan().generalNames) - אין להם ייצוג
@@ -1294,8 +1308,15 @@
     // למקצועות חובה אין אותו שם אבל גם אין צורך - הנקודות שלהם מגיעות
     // מ-item.pts של המסלול, לא מהרשומה.
     const synthParsed = { courses: passedIds.map(id => ({ id, passed: true, pts: D.coursePoints[id] })), studentName: null };
+    // manual (מקצועות "הוספת מקצוע" ב-FinDeg, כולל מל"ג/ספורט/בחירה חופשית
+    // שסומנו הושלם/מתוכנן) - היה תמיד [] קשיח כאן, למרות ש-sync.manual כבר
+    // מכיל אותם (syncFlowchart ב-js/app.js): מקצוע מל"ג שכבר הושלם/תוכנן שם
+    // המשיך "לדרוש" את כל תיבות המילוי הסינתטיות מחדש בתרשים, כאילו לא נעשה
+    // כלום (נתפס - בקשת המשתמש/ת, 2026-07-24). ראו גם scheduleGeneralEd
+    // ב-optimizer.js שעכשיו גם מציג "מתוכנן" בשמו האמיתי, לא רק מנכה נקודות.
+    const manual = synced ? (sync.manual || []) : [];
     const res = FINDEG_ENGINE.evaluate(synthParsed, trackKey, yearKey, {
-      specialization: specKey, projectKey: projectKey || null, overrides, categories: {}, manual: []
+      specialization: specKey, projectKey: projectKey || null, overrides, categories: {}, manual
     });
     return { t, yd, sync, synced, passedIds, synthParsed, res };
   }
@@ -1380,11 +1401,22 @@
       : optGoal === "frontload" ? optFrontloadCapPts
       : optGoal === "semesters" ? 0
       : undefined;
-    const plan = FINDEG_OPTIMIZER.computePlan(res, synthParsed,
-      { trackKey, specialization: specKey, projectKey: projectKey || null, capPts: effectiveCapPts,
-        frontload: optGoal === "frontload", taper: optGoal === "recommended",
-        startSeason: optStartSeason || undefined, yearKey, pinnedIds: Object.keys(pinned), hardPins,
-        preferredIds: [...laterSet], excludedIds: Object.keys(excluded) });
+    // materializedPlan (state ברמת המודול, למעלה) - התוכנית "מוקפאת" ברגע
+    // שחושבה, ולא מחושבת מחדש בכל render: רק ב-null (ביקור ראשון בתצוגה הזו/
+    // אחרי "הרץ מחדש"/איפוס/שינוי מסלול-שנה-התמחות-פרויקט) נריץ את
+    // FINDEG_OPTIMIZER.computePlan בפועל. גרירה (drop handler למטה) עורכת את
+    // materializedPlan.plan *ישירות* בלי לגעת כאן בכלל - "הפונקציה שמארגנת
+    // מחדש את התרשים צריכה לרוץ רק בלחיצה על הרצה/איפוס או ברענון הדף", לא
+    // בכל גרירה או בכל שינוי הגדרה (יעד/תקרה) - אלה נשמרים כהעדפה ל"הרצה"
+    // הבאה בלבד, לא מיושמים מיד (בקשת המשתמש/ת, 2026-07-25).
+    if (!materializedPlan) {
+      materializedPlan = FINDEG_OPTIMIZER.computePlan(res, synthParsed,
+        { trackKey, specialization: specKey, projectKey: projectKey || null, capPts: effectiveCapPts,
+          frontload: optGoal === "frontload", taper: optGoal === "recommended",
+          startSeason: optStartSeason || undefined, yearKey, pinnedIds: Object.keys(pinned), hardPins,
+          preferredIds: [...laterSet], excludedIds: Object.keys(excluded) });
+    }
+    const plan = materializedPlan;
 
     // כל מקצוע-בחירה שנחת בתוכנית בפועל (מכל סיבה) - קובע את מצב ה-checkbox
     // בפאנל למטה (ראו optPlacedElectiveIds למעלה).
@@ -1410,8 +1442,6 @@
     // משמש בנפרד לצ'יפ "נומינלית כרגע בסמסטר X" ולבדיקת overdueIds - שני אלה
     // עובדתיים-תאריכיים ולא אמורים לזוז בגלל בחירת-תכנון.
     const semOffset = plan.planAnchorSemester != null ? plan.planAnchorSemester - 1 : 0;
-    lastOptimizerPlan = plan;
-    lastOptimizerSemOffset = semOffset;
 
     if (summary) {
       // plan.totalSemesters (אורך התוכנית המשובצת בפועל) עשוי להיות גדול
@@ -1484,9 +1514,15 @@
           // רק "רעש" מתחת לתיבה (בקשת המשתמש/ת, 2026-07-21). "project-last"/
           // "taper-split" (הזזת פרויקט הנדסי לסמסטר האחרון/נוסף, ראו optimizer.js)
           // אותו סיפור - נימוק פנימי, לא רלוונטי מתחת לתיבת הפרויקט עצמה
-          // (בקשת המשתמש/ת, 2026-07-24).
+          // (בקשת המשתמש/ת, 2026-07-24). "hard-pin" (מתוכנן ב-FinDeg/נעוץ ידנית
+          // בגרירה) - כבר מתוקשר חזותית לגמרי (מסגרת זהובה + כפתור ✕ לביטול,
+          // ראו fc-hard-pinned/fc-unpin למטה) - הטקסט המילולי היה עוד "רעש" בלי
+          // מידע חדש. משאירים רק הערות שמסמנות בעיה/סיכון אמיתיים (overdue/
+          // not-yet-offered, עם fc-push-note) - לא סתם מסבירות למה תיבה נמצאת
+          // איפה שהיא נמצאת (בקשת המשתמש/ת, 2026-07-26: "remove most of the
+          // descriptions... unless it is about there being a flagged issue").
           const noteHtml = idNotes
-            .filter(n => n.kind !== "general" && n.kind !== "project-last" && n.kind !== "taper-split")
+            .filter(n => !["general", "project-last", "taper-split", "hard-pin"].includes(n.kind))
             .map(n => '<div class="section-note' + (n.kind === "overdue" || n.kind === "not-yet-offered" ? " fc-push-note" : "") +
               '" style="margin:2px 0 0;font-size:.7rem">' + esc(n.reason) + "</div>")
             .join("") + autoNote;
@@ -1753,7 +1789,7 @@
       tsel.value = trackKey;
       tsel.addEventListener("change", () => {
         trackKey = tsel.value;
-        pinned = {}; projectKey = ""; hardPins = {}; excluded = {}; // תרשימי מסלולים שונים לא ברי-השוואה, מתחילים נקי
+        pinned = {}; projectKey = ""; hardPins = {}; excluded = {}; materializedPlan = null; // תרשימי מסלולים שונים לא ברי-השוואה, מתחילים נקי
         refreshYearOptions();
         saveState();
         renderCurrent();
@@ -1765,12 +1801,12 @@
     const ssel = $("#fc-spec");
     if (ssel) ssel.addEventListener("change", () => {
       specKey = ssel.value;
-      pinned = {}; projectKey = ""; hardPins = {}; excluded = {}; // התמחויות שונות = דרישות שונות, לא ברות-השוואה
+      pinned = {}; projectKey = ""; hardPins = {}; excluded = {}; materializedPlan = null; // התמחויות שונות = דרישות שונות, לא ברות-השוואה
       saveState();
       renderCurrent();
     });
-    $("#fc-year").addEventListener("change", () => { yearKey = $("#fc-year").value; refreshSpecOptions(); refreshProjectOptions(); saveState(); renderCurrent(); });
-    $("#fc-project").addEventListener("change", e => { projectKey = e.target.value; saveState(); renderCurrent(); });
+    $("#fc-year").addEventListener("change", () => { yearKey = $("#fc-year").value; materializedPlan = null; refreshSpecOptions(); refreshProjectOptions(); saveState(); renderCurrent(); });
+    $("#fc-project").addEventListener("change", e => { projectKey = e.target.value; materializedPlan = null; saveState(); renderCurrent(); });
     const ssnsel = $("#fc-startseason");
     if (ssnsel) {
       ssnsel.value = optStartSeason;
@@ -1807,9 +1843,19 @@
       saveState();
       renderCurrent();
     });
+    // "הרץ אופטימיזציה" - הטריגר המפורש היחיד (מלבד איפוס/רענון-דף) שגורם
+    // ל-renderOptimizerView לחשב מחדש בפועל (מאפס את materializedPlan) - כל
+    // שינוי יעד/תקרה עד עכשיו רק נשמר כהעדפה, לא הופעל מיד (בקשת המשתמש/ת,
+    // 2026-07-25). hardPins נשארים כפי שהם - מקצועות שנגררו ידנית קודם
+    // נשארים קבועים גם אחרי הרצה חדשה, בדיוק כמו שהיה תמיד.
+    const runBtn = $("#fco-run");
+    if (runBtn) runBtn.addEventListener("click", () => {
+      materializedPlan = null;
+      renderCurrent();
+    });
     $("#fc-reset").addEventListener("click", () => {
       if (!confirm("לאפס את כל המקצועות שנעוצו?")) return;
-      pinned = {}; projectKey = ""; hardPins = {}; excluded = {}; saveState(); renderCurrent();
+      pinned = {}; projectKey = ""; hardPins = {}; excluded = {}; materializedPlan = null; saveState(); renderCurrent();
     });
     const addSemBtn = $("#fcm-add-sem");
     if (addSemBtn) addSemBtn.addEventListener("click", () => {
@@ -1938,26 +1984,47 @@
     const id = e.dataTransfer.getData("text/plain");
     if (!id) return;
     if (zone.classList.contains("fco-drop-zone")) {
-      // "תכנון אופטימלי": גרירה = נעיצה קשיחה לסמסטר הזה (מספר מוחלט, ראו
-      // hardPins למעלה) - "must". לפני שדורסים את hardPins עם המיקום החדש,
-      // מקפיאים גם את מיקומם *הנוכחי* של כל שאר המקצועות המוצגים (lastOptimizerPlan,
-      // שנשמר ב-renderOptimizerView) - כדי שגרירה בודדת תזיז רק את המקצוע
-      // הזה, לא תפעיל מחדש איזון/קיבולת על כל מה שהמשתמש/ת לא נגע/ה בו
-      // (בקשת המשתמש/ת, 2026-07-24: "it shouldn't try to re-optimize it, it
-      // should just let it change, only updating the number of points").
-      // מקצועות סינתטיים (gen_*, מל"ג/ספורט/בחירה חופשית) לא מוקפאים - אין
-      // להם id יציב באמת בין הרצות (ראו scheduleGeneralEd, optimizer.js),
-      // ותמיד "יש מספיק מבחר" בשבילם ממילא.
-      if (lastOptimizerPlan) {
-        for (const sem of lastOptimizerPlan.plan) {
-          const abs = sem.index + lastOptimizerSemOffset;
-          for (const cid of sem.ids) {
-            if (cid.startsWith("gen_") || hardPins[cid] != null) continue;
-            hardPins[cid] = abs;
+      // "תכנון אופטימלי": גרירה עורכת את materializedPlan *ישירות* (מזיזה
+      // את id בין מערכי ids של הסמסטרים, מעדכנת נק') - בלי לקרוא ל-
+      // FINDEG_OPTIMIZER.computePlan בכלל, כך שרק המקצוע הזה זז ושום דבר
+      // אחר לא "מאורגן מחדש". hardPins[id] מתעדכן *רק* עבור המקצוע הזה
+      // (לא כל מה שמוצג) - זה כל התג "נעוץ" שנראה, ומבטיח שהמיקום ישרוד גם
+      // "הרץ מחדש" מאוחר יותר (בקשת המשתמש/ת, 2026-07-25: לא "לסמן הכול
+      // כנעוץ" כתוצאה מגרירה בודדת - רק הפונקציה עצמה לא רצה מחדש בלי
+      // לחיצה על הרץ/איפוס/רענון). מקצועות סינתטיים (gen_*) לא מקבלים
+      // hardPin - אין להם id יציב בין הרצות (ראו scheduleGeneralEd,
+      // optimizer.js), ותמיד "יש מספיק מבחר" בשבילם ממילא.
+      if (materializedPlan) {
+        const targetAbs = +zone.dataset.semIndex;
+        const semOffset = materializedPlan.planAnchorSemester != null ? materializedPlan.planAnchorSemester - 1 : 0;
+        const targetRel = Math.max(1, targetAbs - semOffset);
+        const movedPts = materializedPlan.pointsById[id] ?? 0;
+        for (const sem of materializedPlan.plan) {
+          const i = sem.ids.indexOf(id);
+          if (i !== -1) {
+            sem.ids.splice(i, 1);
+            sem.pts = +(sem.pts - movedPts).toFixed(2);
+            break;
           }
         }
+        // מרחיבים את materializedPlan.plan אם צריך (יעד מעבר לסוף התוכנית
+        // הנוכחית) - עונת הסמסטר החדש נגזרת מזוגיות ה-index יחסית לסמסטר
+        // 1 הקיים כבר (אותו מעגל חורף/אביב שהאלגוריתם עצמו קבע), לא ממוחזרת
+        // בטעות מ-optStartSeason (עלול לא להתאים אם הזיהוי היה אוטומטי).
+        const refSem = materializedPlan.plan[0];
+        while (materializedPlan.plan.length < targetRel) {
+          const idx = materializedPlan.plan.length + 1;
+          const season = refSem
+            ? (idx % 2 === refSem.index % 2 ? refSem.season : (refSem.season === "winter" ? "spring" : "winter"))
+            : relativeSeason(idx);
+          materializedPlan.plan.push({ index: idx, season, ids: [], pts: 0 });
+        }
+        const dest = materializedPlan.plan[targetRel - 1];
+        dest.ids.push(id);
+        dest.pts = +(dest.pts + movedPts).toFixed(2);
+        materializedPlan.totalSemesters = materializedPlan.plan.length;
+        if (!id.startsWith("gen_")) hardPins[id] = targetAbs;
       }
-      hardPins[id] = +zone.dataset.semIndex;
       saveState();
       renderCurrent();
       return;

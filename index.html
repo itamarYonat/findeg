@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FinDeg – כמה נשאר לי בתואר?</title>
   <!-- ?v=N מונע ערבוב קבצים ישנים/חדשים מהמטמון של הדפדפן - להעלות N בכל שינוי ב-css/js -->
-  <link rel="stylesheet" href="css/style.css?v=59">
+  <link rel="stylesheet" href="css/style.css?v=66">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎓</text></svg>">
 </head>
 <body>
@@ -21,6 +21,23 @@
     <h1>🎓 FinDeg</h1>
     <p class="tagline">כמה נשאר לי בתואר? — הפקולטה להנדסה אזרחית וסביבתית, טכניון</p>
   </header>
+
+  <!-- עזרה צפה - קבועה למסך, לא תלויה בשום state; מתרחבת ב-hover בלבד (בקשת המשתמש/ת) -->
+  <div id="readme-help" class="readme-help">
+    <button class="readme-toggle" type="button" aria-label="עזרה - איך משתמשים בכלי">?</button>
+    <div class="readme-panel">
+      <h2>📖 איך משתמשים בכלי</h2>
+      <ol>
+        <li>אם בכוונתכם לבצע פרויקט (הנדסי) שני, בחרו אותו למעלה בהגדרות המסלול - זה קובע את שרשרת מקצועות הקדם המדויקת שתידרש מכם.</li>
+        <li>סמנו כ"הושלם" כל מה שאתם לומדים <b>כרגע</b> (כולל סמסטר קיץ) - מקצועות מהסמסטר הנוכחי או מקיץ עדיין לא מופיעים בתדפיס, ולכן גם לא בתרשים הזרימה, אלא אם תסמנו אותם ידנית.</li>
+        <li>סמנו כ"מתוכנן" (כחול) כל מה שאתם מתכננים ללמוד <b>בסמסטר הבא</b>.</li>
+        <li>בכל מקום עם בחירה (קבוצת בחירה / סל כלל-טכניוני) - סמנו "מתוכנן" את האפשרויות שאתם באמת רוצים ללמוד, כדי שהן יופיעו בתרשימי הזרימה. מקצוע שלא תסמנו יוחלף אוטומטית ב"ממלא מקום" שהאלגוריתם בוחר לבדו, רק כדי למלא את המכסה.</li>
+      </ol>
+      <p>כדי להוסיף מקצוע שלא נמצא ברשימה, גללו למטה לקטע "מקצועות בחירה". קודם ודאו שכל המקצועות שזוהו אוטומטית משויכים לסל הנכון (מל"ג זוהה כמל"ג, בחירה חופשית כבחירה חופשית, וספורט כספורט) - ואז, לכל מקצוע שבכוונתכם ללמוד, אפשר לציין שם כמה נק' הוא שווה, לאיזה סל הוא שייך, ומתי אתם מתכננים ללמוד אותו.</p>
+      <p>יש גם בדיקה מול <b>רשם המהנדסים והאדריכלים</b>; אם אתם עושים תואר משולב, אפשר להוסיף בדיקה מול ענף רישום נוסף לצורך השוואה.</p>
+      <p>בסיום, אפשר לעבור ל<a href="flowcharts.html">תרשימי הזרימה</a> - שם יש הסבר נפרד המתייחס אליהם באופן ספציפי.</p>
+    </div>
+  </div>
 
   <main>
     <!-- שלב 1: העלאת תדפיס -->
@@ -74,13 +91,13 @@
   </div>
 
   <script src="vendor/pdf.min.js"></script>
-  <script src="js/data.js?v=59"></script>
-  <script src="js/semesters.js?v=59"></script>
-  <script src="js/flowchart-data.js?v=59"></script>
-  <script src="js/nav-menu.js?v=59"></script>
-  <script src="js/parser.js?v=59"></script>
-  <script src="js/engine.js?v=59"></script>
-  <script src="js/optimizer.js?v=59"></script>
-  <script src="js/app.js?v=59"></script>
+  <script src="js/data.js?v=66"></script>
+  <script src="js/semesters.js?v=66"></script>
+  <script src="js/flowchart-data.js?v=66"></script>
+  <script src="js/nav-menu.js?v=66"></script>
+  <script src="js/parser.js?v=66"></script>
+  <script src="js/engine.js?v=66"></script>
+  <script src="js/optimizer.js?v=66"></script>
+  <script src="js/app.js?v=66"></script>
 </body>
 </html>

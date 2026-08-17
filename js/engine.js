@@ -316,7 +316,12 @@ window.FINDEG_ENGINE = (function () {
     for (const c of parsed.courses) {
       if (!c.passed || usedIds.has(c.id)) continue;
       if (c.pts <= 0) { zeroCredit.push(c); continue; }
-      const cat = cats[c.id] || (c.id.startsWith("039") ? "pe" : "free");
+      // ברירת מחדל (בלי שיוך ידני, cats[c.id]): "039" = ספורט (חינוך גופני),
+      // enrichmentCourseIds (data.js, נאסף מ-ugportal.technion.ac.il) = מל"ג,
+      // אחרת "בחירה חופשית" - היו קודם רק שני המקרים הראשונים, אז כל מקצוע
+      // מל"ג לא-משויך נפל ל"בחירה חופשית" בטעות (בקשת המשתמש/ת, 2026-07-26).
+      const cat = cats[c.id] || (c.id.startsWith("039") ? "pe"
+        : (D().enrichmentCourseIds && D().enrichmentCourseIds.has(c.id)) ? "enrich" : "free");
       buckets[cat].courses.push({ id: c.id, pts: c.pts, fromTranscript: true });
     }
     manualCourses.forEach((m, i) => {
@@ -332,10 +337,35 @@ window.FINDEG_ENGINE = (function () {
         if (m.status === "done") overrideDonePts += +m.pts || 0;
       }
     });
-    // נקודות "עודפות" מקבוצה א'+ב' (מעבר ל-20 הנדרשות) נספרות אוטומטית בבחירה חופשית
-    if (groupABResult && groupABResult.pts > groupABResult.needed) {
-      const overflow = +(groupABResult.pts - groupABResult.needed).toFixed(1);
-      buckets.free.courses.push({ name: "עודף נקודות מקבוצה א'+ב'", pts: overflow, overflow: true });
+    // נקודות/מקצועות "עודפים" מקבוצה א'+ב' (מעבר ל-20 הנדרשות) נספרים אוטומטית
+    // בבחירה חופשית - לפי סדר-עדיפות הושלם->מתוכנן->בהמשך (כל שכבה "צורכת"
+    // מהמכסה קודם, ורק העודף שנשאר אחריה עובר הלאה): הושלם (progress אמיתי)
+    // ממשיך כערך-נקודות אנונימי כמו קודם (לא משנה איזה מקצוע ספציפי "עודף"
+    // כשהוא כבר הושלם בפועל); מתוכנן/בהמשך עוברים כמקצועות ספציפיים בשמם,
+    // מסומנים planned/later בהתאמה (כמו מקצוע שנוסף ידנית עם אותו סטטוס למעלה)
+    // כדי שיוצגו כ"מתוכנן"/"בהמשך" גם בבחירה החופשית, לא רק בקבוצה א'+ב'
+    // (בקשת המשתמש/ת, 2026-07-24). "בהמשך" עדיין לא נספר בשום מקום כהתקדמות
+    // בפועל (כרגיל) - רק מקבל כאן "מסלול תצוגה" חדש אם ממילא לא יידרש לקבוצה
+    // א'+ב' (המכסה כבר נענתה ע"י הושלם+מתוכנן שקדמו לו בסדר העדיפות).
+    if (groupABResult) {
+      if (groupABResult.pts > groupABResult.needed) {
+        const overflow = +(groupABResult.pts - groupABResult.needed).toFixed(1);
+        buckets.free.courses.push({ name: "עודף נקודות מקבוצה א'+ב'", pts: overflow, overflow: true });
+      }
+      let quota = Math.max(0, +(groupABResult.needed - groupABResult.pts).toFixed(1));
+      for (const h of groupABResult.hits.filter(h => h.planned)) {
+        const p = h.rec.pts || 0;
+        if (quota >= p) { quota = +(quota - p).toFixed(1); continue; }
+        buckets.free.courses.push({ name: D().courseNames[h.id] || h.id, pts: p, planned: true, overflow: true });
+        quota = 0;
+      }
+      const laterInGroupAB = groupABResult.section.pool.filter(id => overrides && overrides[id] === "later");
+      for (const id of laterInGroupAB) {
+        const p = D().coursePoints[id] || 0;
+        if (quota >= p) { quota = +(quota - p).toFixed(1); continue; }
+        buckets.free.courses.push({ name: D().courseNames[id] || id, pts: p, later: true, overflow: true });
+        quota = 0;
+      }
     }
     for (const b of Object.values(buckets)) {
       b.pts = b.courses.filter(c => !c.planned && !c.later).reduce((s, c) => s + c.pts, 0);

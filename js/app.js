@@ -1068,7 +1068,11 @@
     for (const [key, b] of Object.entries(g.buckets)) {
       for (const c of b.courses) {
         const row = el("div", "gen-course");
-        if (c.overflow) {
+        if (c.overflow && c.planned) {
+          row.innerHTML = '<span class="status-plan">🕒 ' + esc(c.name) + " (" + fmtPts(c.pts) + " נק') <small>מתוכנן - עודף מעבר לדרישת קבוצה א'+ב'</small></span>";
+        } else if (c.overflow && c.later) {
+          row.innerHTML = '<span class="status-later">🗓️ ' + esc(c.name) + " (" + fmtPts(c.pts) + " נק') <small>בהמשך - עודף מעבר לדרישת קבוצה א'+ב'</small></span>";
+        } else if (c.overflow) {
           row.innerHTML = '<span class="status-manual">➕ ' + esc(c.name) + " (" + fmtPts(c.pts) + " נק') <small>נספר אוטומטית - עודף מעבר לדרישת קבוצה א'+ב'</small></span>";
         } else if (c.fromTranscript) {
           row.innerHTML = "<span>✓ " + esc(cname(c.id)) + " (" + fmtPts(c.pts) + " נק')</span>" +

@@ -1021,11 +1021,31 @@ window.FINDEG_OPTIMIZER = (function () {
       return plan[plan.length - 1]; // לא אמור לקרות (tier אחרון הוא "true"), רשת ביטחון
     }
 
+    // מקצוע ידני (js/app.js, "הוספת מקצוע") שסומן "מתוכנן" בסל הזה כבר "צורך"
+    // חלק מהדרישה - כמו קבוצה א'+ב' למעלה, "הושלם" צורך ראשון (בלי תיבה
+    // משלו - כבר גמור) ואז "מתוכנן" צורך בשמו האמיתי (לא כ"מל\"ג N" סינתטי -
+    // המשתמש/ת כבר יודע/ת בדיוק אילו מקצוע זה). בלי זה, מקצוע מל"ג/ספורט/
+    // בחירה חופשית שכבר סומן הושלם/מתוכנן ב-FinDeg עדיין ייצור את *כל* תיבות
+    // המילוי הסינתטיות מחדש בתרשים, כאילו שום דבר לא נעשה (נתפס - בקשת
+    // המשתמש/ת, 2026-07-24: "even though they have been done in findeg, all 3
+    // are required within the flowchart"). numbering של תיבות הפילר הסינתטיות
+    // שנשארות ממשיך מאיפה ש"הושלם"+"מתוכנן" הפסיקו (לא מתאפס ל-1) - כדי
+    // שהמספור ישקף כמה "יחידות" מתוך הדרישה הכוללת עדיין חסרות בפועל.
     for (const key of ["pe", "free"]) {
       const b = buckets[key];
       if (!b) continue;
-      let remaining = +(b.needed - b.pts).toFixed(2);
-      let n = 1;
+      let consumed = Math.min(b.pts, b.needed);
+      for (const c of b.courses.filter(c => c.planned)) {
+        if (consumed >= b.needed - 0.01) break;
+        const amt = Math.min(c.pts, +(b.needed - consumed).toFixed(2));
+        const target = pickByTiers([s => fitsCap(s, amt), () => true], false);
+        const id = "gen_" + key + "_manual_" + (c.manualIndex != null ? c.manualIndex : c.name);
+        addChunk(id, c.name, amt, target);
+        notes.push({ id, kind: "general", to: target.index, reason: 'מילוי דרישת "' + b.label + '" - מקצוע מתוכנן שכבר נוסף ידנית ב-FinDeg' });
+        consumed = +(consumed + amt).toFixed(2);
+      }
+      let remaining = +(b.needed - consumed).toFixed(2);
+      let n = Math.floor(consumed / GENERAL_CHUNK[key]) + 1;
       while (remaining > 0.01) {
         const amt = Math.min(GENERAL_CHUNK[key], remaining);
         // הכי פחות עמוס בתוך התקרה; אם אף סמסטר לא עומד בתקרה - מתעלמים
@@ -1041,24 +1061,38 @@ window.FINDEG_OPTIMIZER = (function () {
 
     const b = buckets.enrich;
     if (b) {
-      let remaining = +(b.needed - b.pts).toFixed(2);
       const usedSemesters = new Set();
-      let n = 1;
+      const isYearOne = sem => nominalSemester != null && (nominalSemester - 1 + sem.index) <= 2;
+      const notUsed = s => !usedSemesters.has(s.index);
+      // מדרג: (1) לא בשימוש+לא שנה א'+לא הסמסטר האחרון+בתקרה; (2) מוותרים
+      // על "לא שנה א'"; (3) מוותרים גם על "לא אחרון"; (4) מוותרים גם על
+      // התקרה; (5) מוותרים גם על "מקסימום אחד לסמסטר" (רק אם ממש נגמר
+      // המקום בתוך planLen - התקרה הקשיחה היחידה שנשארת). אותו מדרג גם
+      // למקצוע מתוכנן שכבר נוסף ידנית וגם לתיבת-מילוי סינתטית - שניהם "תופסים
+      // מקום" מל"ג לכל דבר.
+      const enrichTiers = amt => [
+        s => notUsed(s) && !isYearOne(s) && s.index !== planLen && fitsCap(s, amt),
+        s => notUsed(s) && s.index !== planLen && fitsCap(s, amt),
+        s => notUsed(s) && fitsCap(s, amt),
+        s => notUsed(s),
+        () => true
+      ];
+      let consumed = Math.min(b.pts, b.needed);
+      for (const c of b.courses.filter(c => c.planned)) {
+        if (consumed >= b.needed - 0.01) break;
+        const amt = Math.min(c.pts, +(b.needed - consumed).toFixed(2));
+        const target = pickByTiers(enrichTiers(amt), true);
+        const id = "gen_enrich_manual_" + (c.manualIndex != null ? c.manualIndex : c.name);
+        addChunk(id, c.name, amt, target);
+        usedSemesters.add(target.index);
+        notes.push({ id, kind: "general", to: target.index, reason: 'מילוי דרישת "' + b.label + '" - מקצוע מתוכנן שכבר נוסף ידנית ב-FinDeg' });
+        consumed = +(consumed + amt).toFixed(2);
+      }
+      let remaining = +(b.needed - consumed).toFixed(2);
+      let n = Math.floor(consumed / GENERAL_CHUNK.enrich) + 1;
       while (remaining > 0.01) {
         const amt = Math.min(GENERAL_CHUNK.enrich, remaining);
-        const isYearOne = sem => nominalSemester != null && (nominalSemester - 1 + sem.index) <= 2;
-        const notUsed = s => !usedSemesters.has(s.index);
-        // מדרג: (1) לא בשימוש+לא שנה א'+לא הסמסטר האחרון+בתקרה; (2) מוותרים
-        // על "לא שנה א'"; (3) מוותרים גם על "לא אחרון"; (4) מוותרים גם על
-        // התקרה; (5) מוותרים גם על "מקסימום אחד לסמסטר" (רק אם ממש נגמר
-        // המקום בתוך planLen - התקרה הקשיחה היחידה שנשארת).
-        const target = pickByTiers([
-          s => notUsed(s) && !isYearOne(s) && s.index !== planLen && fitsCap(s, amt),
-          s => notUsed(s) && s.index !== planLen && fitsCap(s, amt),
-          s => notUsed(s) && fitsCap(s, amt),
-          s => notUsed(s),
-          () => true
-        ], true);
+        const target = pickByTiers(enrichTiers(amt), true);
         const num = n++;
         const id = "gen_enrich_" + num;
         addChunk(id, GENERAL_SHORT_LABEL.enrich + " " + num, amt, target);
@@ -1165,6 +1199,14 @@ window.FINDEG_OPTIMIZER = (function () {
     // last semester" - לא רק EPS רגיל, שעלול למקם פרויקט טרמינלי באמצע
     // התוכנית סתם כי דרישות הקדם שלו מתמלאות מוקדם).
     const projectIds = new Set();
+    // מקצועות-חובה שסומנו "מתוכנן" ב-FinDeg (overrides[id]==="planned") -
+    // הצהרה מפורשת של הסטודנט/ית "זה מה שאני לוקח/ת עכשיו", לא רק "עוד
+    // מקצוע חסר" - צריכים להיכנס לסמסטר הבא (relative=1) בעדיפות הגבוהה
+    // ביותר, בדיוק כמו נעיצה ידנית (hardPins). נאספים כאן תוך כדי איסוף
+    // remainingIds הרגיל, ומוזגים ל-hardPinsRelative בהמשך הפונקציה (בקשת
+    // המשתמש/ת, 2026-07-25: "that's the user telling you what he is planning
+    // on taking and we should respect it as the highest priority").
+    const plannedMandatoryIds = new Set();
     for (const r of res.sections || []) {
       if (r.kind !== "courses") continue;
       const isProjectSection = r.section && r.section.id === "project";
@@ -1173,6 +1215,7 @@ window.FINDEG_OPTIMIZER = (function () {
         missingMandatory.push(id);
         ptsOverride[id] = row.item.pts;
         if (isProjectSection) projectIds.add(id);
+        if (row.planned) plannedMandatoryIds.add(id);
       }
     }
     for (const c of res.chains || []) {
@@ -1180,6 +1223,7 @@ window.FINDEG_OPTIMIZER = (function () {
         if (row.done || doneIds.has(row.id)) continue;
         missingMandatory.push(row.id);
         ptsOverride[row.id] = row.pts;
+        if (row.planned) plannedMandatoryIds.add(row.id);
       }
     }
     if (res.projects && !res.projects.mandatory.done) {
@@ -1188,6 +1232,27 @@ window.FINDEG_OPTIMIZER = (function () {
       missingMandatory.push(id);
       ptsOverride[id] = res.projects.mandatory.item.pts;
       projectIds.add(id);
+      if (res.projects.mandatory.planned) plannedMandatoryIds.add(id);
+    }
+    // הפרויקט השני שנבחר בתפריט (project-select, ניהול ובנייה): בחירה מפורשת
+    // מהתפריט היא כבר כוונה ברורה לבצע אותו - לא אמור לדרוש גם סימון נפרד
+    // "מתוכנן" ב-FinDeg כדי להופיע בתרשים, בדיוק כמו הפרויקט החובה למעלה
+    // (בקשת המשתמש/ת, 2026-07-24: "if I selected that I am taking the [chain]
+    // project, the project should be on the flow chart without me having to
+    // select it manually as planned"). שרשרת-הקדם של הפרויקט (extraCourses/
+    // extraChoose) כבר נכנסת ל-remainingIds למעלה דרך res.chains בלי קשר לזה
+    // (מופעלת ע"י עצם הבחירה, ראו projectChainMap/evaluate ב-engine.js) - מה
+    // שהיה חסר הוא רק הפרויקט עצמו. "בהמשך" (later) עדיין מכבד את הכלל
+    // הכללי - לא משבצים בכוח מקצוע שסומן מפורשות "לא עכשיו".
+    if (res.projects && res.projects.chosen && !res.projects.chosen.done && !res.projects.chosen.later) {
+      const ids = res.projects.chosen.ids;
+      const id = ids.find(i => !doneIds.has(i)) || ids[0];
+      if (!missingMandatory.includes(id)) {
+        missingMandatory.push(id);
+        ptsOverride[id] = res.projects.chosen.pts;
+        projectIds.add(id);
+        if (res.projects.chosen.planned) plannedMandatoryIds.add(id);
+      }
     }
     const remainingIds = [...new Set(missingMandatory)];
 
@@ -1259,6 +1324,23 @@ window.FINDEG_OPTIMIZER = (function () {
       openPools.push({ key: c.key + "_choose", title: c.title, kind: "count",
         need: c.chooseResult.min - c.chooseResult.doneCount, pool: [...plannedIds, ...c.chooseResult.misses] });
     }
+    // דרישת נק' מצטברת קבוצה א' / קבוצה א'+ב' (ניהול ובנייה בלבד - res.groupA/
+    // res.groupAB, ראו evalChoosePoints ב-engine.js): אותו kind:"choosePoints"
+    // בדיוק כמו res.sections למעלה, רק עם pool מאוחד משלהן (לא props של
+    // res.sections/res.chains הרגילים) - בלעדי הטיפול הבא, המילוי האוטומטי
+    // היה עוצר ברגע שממלא רק את מכסת ה"מספר מקצועות" של כל שרשרת-משנה (למשל
+    // 3 מ"ניהול ובנייה") בלי לבדוק שגם דרישת הנק' המצטברת (17/20 נק') אכן
+    // מתמלאת - סטודנט/ית יכל/ה לקבל בדיוק 3 מקצועות זולים שלא מגיעים ל-17
+    // נק' (נתפס - בקשת המשתמש/ת, 2026-07-29). מעבד אחרי שרשראות-המשנה בכוונה,
+    // כדי שמה ששובץ כבר דרכן ייזקף לזכות (credited, ראו fillElectives) והמילוי
+    // הנוסף כאן יתמקד רק בפער האמיתי שנשאר.
+    for (const r of [res.groupA, res.groupAB].filter(Boolean)) {
+      const plannedIds = r.hits.filter(h => h.planned).map(h => h.id);
+      plannedIds.forEach(id => plannedElectiveIds.add(id));
+      if (r.satisfied && !plannedIds.length && !r.misses.some(id => laterWanted.has(id))) continue;
+      openPools.push({ key: r.section.id, title: r.section.title, kind: "points",
+        need: r.needed - r.pts, pool: [...plannedIds, ...r.misses] });
+    }
 
     if (excludedSet.size) {
       for (const p of openPools) p.pool = p.pool.filter(id => !excludedSet.has(id));
@@ -1294,6 +1376,21 @@ window.FINDEG_OPTIMIZER = (function () {
     for (const [id, absSem] of Object.entries(options.hardPins || {})) {
       const rel = planAnchorSemester != null ? absSem - planAnchorSemester + 1 : absSem;
       hardPinsRelative[id] = Math.max(1, rel);
+    }
+    // מקצוע שסומן "מתוכנן" ב-FinDeg (plannedMandatoryIds/plannedElectiveIds,
+    // נאספו למעלה) - הצהרה מפורשת "זה מה שאני לוקח/ת עכשיו", לא רק "עוד
+    // מועמד". נכנס לסמסטר הבא (relative=1) באותה עדיפות בדיוק כמו נעיצה
+    // ידנית - lockedIds (ל-scheduleMandatory) ו-placeElectiveHardPinned (ל-
+    // fillElectives) גם מדלגים על בדיקת-EPS הרגילה עבור מקצועות נעוצים, אז
+    // אם דרישת הקדם בפועל לא מתמלאת עד אז - לא "מתקנים" בשקט, פשוט משבצים
+    // כמבוקש ומשאירים לתג "!" (prereqSatisfiedAt, js/flowchart.js) לסמן את
+    // הבעיה. דריסה מפורשת של המשתמש/ת (options.hardPins, גרירה בפועל) גוברת -
+    // "מתוכנן" הוא רק ברירת-מחדל, לא נדרס בחזרה אם כבר נגררה לסמסטר אחר
+    // (בקשת המשתמש/ת, 2026-07-25: "that's the user telling you what he is
+    // planning on taking and we should respect it as the highest priority,
+    // from there you plan").
+    for (const id of [...plannedMandatoryIds, ...plannedElectiveIds]) {
+      if (hardPinsRelative[id] == null) hardPinsRelative[id] = 1;
     }
     const mandatoryHardPins = {};
     for (const id of remainingIds) if (hardPinsRelative[id] != null) mandatoryHardPins[id] = hardPinsRelative[id];
@@ -1347,13 +1444,29 @@ window.FINDEG_OPTIMIZER = (function () {
     // כמו "מתוכנן" - לא רק העדפת-מילוי (ראו הערה על laterWanted למעלה).
     const pinnedIds = new Set([...(options.pinnedIds || []), ...plannedElectiveIds, ...laterWanted].filter(id => !excludedSet.has(id)));
     const electiveNotes = fillElectives(plan, openPools, doneIds, capPts, pinnedIds, frontload, hardPinsRelative, laterWanted, groupAIds);
+    // הבחנה בניסוח בין נעיצה ידנית אמיתית (גרירה, options.hardPins) לבין
+    // נעיצה שמקורה בסימון "מתוכנן" ב-FinDeg (plannedMandatoryIds/
+    // plannedElectiveIds, שהוזגו לתוך hardPinsRelative למעלה) - שתיהן
+    // מתנהגות זהה (relative=1, קבוע) אבל הניסוח "נעוץ ידנית... גרירה" היה
+    // מטעה כשהמקור בפועל היה "מתוכנן", לא גרירה בתרשים (בקשת המשתמש/ת,
+    // 2026-07-25). מתקנים את electiveNotes בדיעבד (kind:"hard-pin" שיצא
+    // מתוך placeElectiveHardPinned, ראו fillElectives) במקום להעביר פרמטר
+    // נוסף דרך כל שרשרת הקריאות עד לשם.
+    const explicitHardPinIds = new Set(Object.keys(options.hardPins || {}));
+    const plannedReason = "סומן \"מתוכנן\" ב-FinDeg - משובץ אוטומטית לסמסטר הבא, קבוע";
+    const draggedReason = "נעוץ ידנית לסמסטר הזה (גרירה) - קבוע, לא יוזז אוטומטית";
+    for (const n of electiveNotes) {
+      if (n.kind === "hard-pin" && !explicitHardPinIds.has(n.id) && plannedElectiveIds.has(n.id) && n.reason === draggedReason) {
+        n.reason = plannedReason;
+      }
+    }
     // מקצועות חובה שנעצו קשיח (mandatoryHardPins) - הערה מסבירה, בדיוק כמו
     // שמועמדי-בחירה נעוצים-קשיח מקבלים בתוך placeElectiveHardPinned. אין צורך
     // לבדוק את המיקום הסופי ב-plan - הוא מובטח להיות בדיוק mandatoryHardPins[id]
     // (lockedIds מדולג מכל שלבי ההזזה ב-scheduleMandatory).
     const mandatoryHardPinNotes = Object.keys(mandatoryHardPins).map(id => ({
       id, kind: "hard-pin", to: mandatoryHardPins[id],
-      reason: "נעוץ ידנית לסמסטר הזה (גרירה) - קבוע, לא יוזז אוטומטית"
+      reason: (!explicitHardPinIds.has(id) && plannedMandatoryIds.has(id)) ? plannedReason : draggedReason
     }));
     // repairPrereqOrder לא אמור לזוז מקצוע שנעוץ קשיח בכלל (מחובה או בחירה) -
     // "must" פירושו קבוע, גם אם דרישת הקדם שלו לא בפועל מתמלאת בסמסטר הזה

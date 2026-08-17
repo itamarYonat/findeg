@@ -381,6 +381,56 @@ details.other-chains summary { font-weight: 700; color: var(--accent); cursor: p
   }
 }
 
+/* עזרה צפה: כפתור "?" קבוע שמתרחב לפאנל הסבר רק ב-hover (בקשת המשתמש/ת,
+   2026-07-29) - ללא JS, transition על opacity/visibility בלבד. focus-within
+   נשאר בשביל ניווט מקלדת (הפאנל עדיין לא נגיש ע"י קליק/מגע). */
+.readme-help { position: fixed; top: 96px; left: 18px; z-index: 59; }
+.readme-toggle {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 800;
+  font-size: 1.05rem;
+  cursor: help;
+  box-shadow: var(--shadow);
+}
+.readme-panel {
+  position: absolute;
+  top: 0;
+  left: 46px;
+  width: 360px;
+  max-width: calc(100vw - 76px);
+  max-height: 75vh;
+  overflow-y: auto;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px 20px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(-8px);
+  transition: opacity .15s ease, transform .15s ease, visibility .15s;
+  pointer-events: none;
+}
+.readme-help:hover .readme-panel, .readme-help:focus-within .readme-panel {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0);
+  pointer-events: auto;
+}
+.readme-panel h2 { margin-top: 0; font-size: 1.05rem; }
+.readme-panel ol { margin: 8px 0; padding-inline-start: 20px; }
+.readme-panel li { margin-bottom: 8px; line-height: 1.5; }
+.readme-panel p { margin: 10px 0 0; line-height: 1.5; font-size: .92rem; }
+@media (max-width: 560px) {
+  .readme-help { top: 70px; left: 10px; }
+  .readme-panel { left: 0; top: 46px; width: min(320px, calc(100vw - 20px)); }
+}
+
 .legend { display: flex; flex-wrap: wrap; gap: 14px; margin: 4px 0 2px; font-size: .82rem; color: var(--muted); }
 .legend .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-inline-end: 5px; }
 .dot-done { background: var(--ok); }
@@ -578,9 +628,15 @@ tr.overridden td { color: var(--muted); }
   color: var(--accent);
 }
 .fc-row-head.spring { background: var(--ok-soft); color: var(--ok); }
-/* nowrap בכוונה: כל מקצועות אותו סמסטר חייבים לשבת באותה שורה חזותית (בקשת
-   משתמש) - במקום לגלוש לשורה שנייה, התיבות עצמן מצטמצמות (ראו .fc-box למטה). */
-.fc-row-boxes { display: flex; flex-wrap: nowrap; align-items: flex-start; gap: 10px; overflow-x: visible; }
+/* כל התיבות בכל התרשימים חייבות להיות באותו גודל קבוע - flex-grow:0/flex-shrink:0
+   מונע משורות עם מעט מקצועות למתוח את התיבות שלהן (בקשת המשתמש/ת, 2026-07-26:
+   גדלים לא אחידים הופכים אינטראקציה עם התרשים לקשה). רוחב כל תיבה מחושב כך
+   שבדיוק 8 תיבות (+7 רווחים) ימלאו שורה - wrap (לא nowrap) כדי שסמסטר עם יותר
+   מ-8 יעבור לשורה שנייה מתחת בלי לשבור את גודל התיבות הקבוע; justify-content:
+   center כדי ששורה עם פחות מ-8 תמורכז, לא תידבק לצד (בקשת המשתמש/ת, 2026-07-26:
+   "make all the boxes wider... so 8 courses fit a semester... pinned to the
+   center of the row rather than the sides"). */
+.fc-row-boxes { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start; gap: 10px; }
 .fc-box {
   border: 1px solid var(--border);
   background: var(--card);
@@ -589,8 +645,8 @@ tr.overridden td { color: var(--muted); }
   font-size: .74rem;
   line-height: 1.35;
   position: relative;
-  min-width: 108px;
-  flex: 1 1 108px;
+  flex: 0 0 calc((100% - 70px) / 8);
+  min-width: 110px;
 }
 /* קליק על תיבת מקצוע (לא "כללי"/dashed - לאלה אין data-course-id) = סימון/
    ביטול "הושלם", ראו toggleDoneOverride ב-flowchart.js. */
