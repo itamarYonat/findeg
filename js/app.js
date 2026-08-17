@@ -1,7 +1,12 @@
 /* FinDeg – חיווט ממשק המשתמש. */
 (function () {
   const D = window.FINDEG_DATA;
-  pdfjsLib.GlobalWorkerOptions.workerSrc = "vendor/pdf.worker.min.js";
+  // נתיב יחסי למיקום *הדף* (לא לקובץ הזה) - היה שגוי מאז ש-app.js הפך למשותף
+  // בין דפי פקולטות בעומק-תיקיות שונה (faculties/<id>/index.html) לעומת
+  // דף הנחיתה בשורש (js/landing.js, לא כאן) - "vendor/..." קשיח פתר תמיד
+  // מול מיקום הדף, לא מול js/app.js עצמו. document.currentScript.src נשאר
+  // תמיד /js/app.js בלי קשר לעומק הדף שטען אותו, אז הנתיב היחסי ממנו יציב.
+  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL("../vendor/pdf.worker.min.js", document.currentScript.src).href;
 
   const $ = sel => document.querySelector(sel);
   const el = (tag, cls, html) => {
@@ -145,8 +150,16 @@
     }
   }
 
-  async function loadFromBuffer(buf, name) {
-    parsed = await FINDEG_PARSER.parsePdf(buf);
+  // מזהה-מסלול ספציפי-לפקולטה (faculties/<id>/detect.js, נטען לפני app.js
+  // ב-HTML) - שם גלובלי אחיד לכל פקולטה, כדי שהקובץ המשותף הזה לא יצטרך
+  // לדעת איזו פקולטה בפועל נטענה. אופציונלי (undefined) עבור פקולטה
+  // "barebones" בלי זיהוי-מסלול משלה - result.track פשוט נשאר null אז,
+  // בדיוק כמו כשל-זיהוי רגיל, ראו js/parser.js.
+  const parserOpts = () => ({
+    detectTrack: window.FINDEG_FACULTY_DETECT && window.FINDEG_FACULTY_DETECT.detectTrack
+  });
+
+  function finishLoad(name) {
     $("#dz-text").textContent = "✓ " + (name || "קובץ") + " נטען. אפשר להעלות קובץ אחר בכל שלב.";
     if (parsed.warnings.length) showError(parsed.warnings.join(" "));
     initSettings();
@@ -155,6 +168,20 @@
     render();
     persistParsed();
     $("#settings-card").scrollIntoView({ behavior: "smooth" });
+  }
+
+  async function loadFromBuffer(buf, name) {
+    parsed = await FINDEG_PARSER.parsePdf(buf, parserOpts());
+    finishLoad(name);
+  }
+
+  // המשך-טעינה אחרי הפניה מדף הנחיתה הכללי (index.html/js/landing.js,
+  // ?autoload=1) - השורות כבר חולצו מה-PDF שם (FINDEG_PARSER.extractLines),
+  // אז ממשיכים ישירות מ-parseTranscript בלי להריץ את pdf.js פעם שנייה על
+  // אותו קובץ. lines מגיע כמערך מחרוזות רגיל (לא PDF גולמי).
+  function loadFromLines(lines, name) {
+    parsed = FINDEG_PARSER.parseTranscript(lines, parserOpts());
+    finishLoad(name);
   }
 
   function showError(msg) {
@@ -1359,10 +1386,20 @@
     $("#clear-transcript").classList.add("hidden");
   });
 
+  // הגעה מדף הנחיתה הכללי (?autoload=1) - עדיפות ראשונה, גוברת גם על מצב
+  // בדיקה/שחזור מ-localStorage (בקשה מפורשת וטרייה יותר מכל מה שהיה קודם).
+  // מפתח sessionStorage (HANDOFF_KEY) חייב להתאים בדיוק לזה שב-js/landing.js.
+  const HANDOFF_KEY = "findeg_landing_lines";
+  const autoload = new URLSearchParams(location.search).get("autoload");
+  const handoff = autoload && sessionStorage.getItem(HANDOFF_KEY);
   // מצב בדיקה: ?test=<url של pdf>. אם המשתמש כבר העלה קובץ ידנית בזמן שהבקשה
   // הזו עדיין רצה ברקע - לא דורסים את מה שהוא העלה.
   const testUrl = new URLSearchParams(location.search).get("test");
-  if (testUrl) {
+  if (handoff) {
+    sessionStorage.removeItem(HANDOFF_KEY); // חד-פעמי - רענון דף אחרי זה נופל בחזרה ל-restoreLastParse הרגיל
+    try { loadFromLines(JSON.parse(handoff), "התדפיס שהועלה"); }
+    catch (err) { console.error(err); restoreLastParse(); }
+  } else if (testUrl) {
     fetch(testUrl).then(r => r.arrayBuffer()).then(b => { if (!parsed) loadFromBuffer(b, testUrl.split("/").pop()); })
       .catch(err => showError("טעינת קובץ הבדיקה נכשלה: " + err.message));
   } else {

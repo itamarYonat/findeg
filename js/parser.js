@@ -203,7 +203,9 @@ window.FINDEG_PARSER = (function () {
     return s;
   }
 
-  function parseTranscript(lines) {
+  // opts (אופציונלי): { detectTrack(headerText) -> trackKey|null } - זיהוי
+  // מסלול ספציפי-לפקולטה, ראו הערה על result.track למטה.
+  function parseTranscript(lines, opts) {
     const result = {
       courses: [],          // {id, pts, grade, status, year, season}
       track: null,          // מפתח מסלול
@@ -215,22 +217,12 @@ window.FINDEG_PARSER = (function () {
     };
 
     const head = lines.slice(0, 8).join(" ");
-    // זיהוי מסלול מכותרת התעודה. בתדפיס שהוצא באנגלית הכותרת הכללית
-    // ("BACHELOR OF SCIENCE IN CIVIL ENGINEERING") אכן לא חושפת את המסלול -
-    // civil הוא הכי גנרי, כמו "אזרחית" בעברית; אם לא זוהה כלום המשתמש בוחר ידנית.
-    // שימו לב: שם הפקולטה עצמו הוא תמיד "Civil and Environmental Engineering" (לכל
-    // הסטודנטים, לא רק להתמחות סביבה!) - אסור לבדוק "environmental"/"management"/
-    // "structural"/"mapping" מול כל הכותרת בלי דוגמה אמיתית מאומתת, כי זה יתפוס
-    // חיובי-שווא על שם הפקולטה. אבל שם *התואר המדויק* (לא הפקולטה) כן מסתיים
-    // לפעמים בסיומת מסלול מפורשת, למשל "BACHELOR OF SCIENCE IN CIVIL ENGINEERING
-    // -STRUCTURES" - דוגמה אמיתית מאומתת (2026-07). בודקים רק בתוך הסיומת אחרי
-    // "CIVIL ENGINEERING", לא כל הכותרת, כדי לא להיתפס על שם הפקולטה כנ"ל.
-    const degreeSuffix = (head.match(/CIVIL ENGINEERING\s*[-–]\s*([A-Z][A-Z\s]*)/i) || [])[1] || "";
-    if (hasHeb(head, "ניהול ובני") || hasHeb(head, "לוהינ") || /MANAGEMENT/i.test(degreeSuffix)) result.track = "management";
-    else if (hasHeb(head, "מבנים") || /STRUCTURE/i.test(degreeSuffix)) result.track = "structures";
-    else if (hasHeb(head, "סביבה")) result.track = "environment";
-    else if (hasHeb(head, "מיפוי")) result.track = "mapping";
-    else if (hasHeb(head, "אזרחית") || /civil engineering/i.test(head)) result.track = "civil";
+    // זיהוי מסלול מכותרת התעודה - ספציפי לכל פקולטה, ולכן לא מקודד כאן יותר
+    // (הפרסר משותף לכל הפקולטות, ראו faculties/<id>/detect.js). opts.detectTrack
+    // (אופציונלי - window.FINDEG_FACULTY_DETECT.detectTrack, מוזרק מ-js/app.js)
+    // מקבל את טקסט הכותרת ומחזיר מפתח-מסלול או null/undefined; בלי opts (או
+    // בלי match) result.track נשאר null - המשתמש/ת בוחר/ת ידנית, בדיוק כמו היום.
+    result.track = (opts && opts.detectTrack && opts.detectTrack(head)) || null;
 
     result.studentName = extractStudentName(head);
 
@@ -373,10 +365,13 @@ window.FINDEG_PARSER = (function () {
     return result;
   }
 
-  async function parsePdf(arrayBuffer) {
+  async function parsePdf(arrayBuffer, opts) {
     const lines = await extractLines(arrayBuffer);
-    return parseTranscript(lines);
+    return parseTranscript(lines, opts);
   }
 
-  return { parsePdf, parseTranscript, extractLines };
+  // hasHeb מיוצא כדי ש-faculties/<id>/detect.js (זיהוי מסלול ספציפי-לפקולטה,
+  // מוזרק כ-opts.detectTrack למעלה) יוכל לבדוק כותרות עברית בדיוק כמו כאן
+  // (עמיד לטקסט הפוך - ראו ההערה על hasHeb למעלה) בלי לשכפל את הלוגיקה.
+  return { parsePdf, parseTranscript, extractLines, hasHeb };
 })();

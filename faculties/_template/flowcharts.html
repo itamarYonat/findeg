@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>תרשימי זרימה – FinDeg (תבנית)</title>
+  <link rel="stylesheet" href="../../css/style.css?v=67">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🗺️</text></svg>">
+</head>
+<body>
+  <nav class="tool-hub">
+    <a href="index.html" class="tool-tab">🎓 FinDeg</a>
+    <div class="tool-tab-dd">
+      <a href="flowcharts.html" class="tool-tab active">🗺️ תרשימי זרימה</a>
+      <div class="tool-tab-dd-menu" id="fc-nav-menu"></div>
+    </div>
+  </nav>
+
+  <header class="site-header">
+    <h1 id="fc-title">🗺️ תרשים זרימה (תבנית)</h1>
+    <p class="tagline">placeholder בלבד - אין עדיין "מסלול מומלץ" בנוי לפקולטה זו; תכנון אופטימלי/ידני
+      עובדים גם בלי זה, אבל בלי מקצועות-חובה ספציפיים אין הרבה מה לתכנן עדיין.</p>
+  </header>
+
+  <main class="fc-main">
+    <div class="fc-mode-tabs" id="fc-mode-tabs">
+      <button type="button" class="fc-mode-tab" data-mode="intended">🗺️ המסלול המומלץ</button>
+      <button type="button" class="fc-mode-tab" data-mode="optimizer">⚡ תכנון אופטימלי</button>
+      <button type="button" class="fc-mode-tab" data-mode="manual">✋ תכנון ידני</button>
+    </div>
+
+    <section class="card">
+      <div class="fc-toolbar">
+        <label>מסלול
+          <select id="fc-track"></select>
+        </label>
+        <label>קטלוג
+          <select id="fc-year"></select>
+        </label>
+        <label id="fc-spec-wrap">התמחות
+          <select id="fc-spec"></select>
+        </label>
+        <label id="fc-project-wrap">פרויקט שני (בכוונתך לבצע)
+          <select id="fc-project"></select>
+        </label>
+        <label id="fc-startseason-wrap" class="hidden">מתחיל/ה בסמסטר
+          <select id="fc-startseason">
+            <option value="">🔎 ניחוש אוטומטי</option>
+            <option value="winter">חורף</option>
+            <option value="spring">אביב</option>
+          </select>
+        </label>
+        <button id="fc-reset" class="add-btn">איפוס בחירות</button>
+      </div>
+      <p class="section-note" id="fc-sync-note"></p>
+    </section>
+
+    <div id="fc-page">
+      <section class="card">
+        <p class="section-note">
+          לחצו על מקצוע בחירה למטה כדי לבחור סמסטר ולנעוץ אותו בתרשים; מקצועות שלא נבחרו
+          מוצגים כ"בועות" צפות למטה, מקובצים לפי שרשרת. <b>העבירו עכבר מעל מקצוע</b> כדי לבודד
+          את החצים שלו בלבד. חצים: <b>קו רציף</b> = דרישת קדם, <b>קו מקווקו</b> = מקצוע צמוד/דרישת
+          אחר. <span style="color:var(--bad)">קו ומסגרת אדומים</span> = השרשרת הארוכה ביותר,
+          לפי מרחק סמסטרים בפועל (לא רק מספר קפיצות בגרף - מקצוע "פעם בשנה" נספר לפי הדילוג
+          האמיתי שהוא יוצר).
+        </p>
+        <div class="fc-wrap" id="fc-wrap">
+          <div class="fc-grid" id="fc-grid"></div>
+        </div>
+        <div class="fc-legend">
+          <span><i class="fc-line"></i>דרישת קדם</span>
+          <span><i class="fc-line dashed"></i>מקצוע צמוד</span>
+          <span><i class="fc-line crit"></i>שרשרת קריטית</span>
+          <span id="fc-crit-note"></span>
+        </div>
+      </section>
+
+      <svg class="fc-svg" id="fc-svg"></svg>
+    </div>
+
+    <div id="fc-opt-page" class="hidden">
+      <section class="card">
+        <div class="fc-toolbar">
+          <label>יעד האופטימיזציה
+            <select id="fco-goal">
+              <option value="recommended">מומלץ (עמוס בהתחלה, קליל בהמשך)</option>
+              <option value="semesters">מינימום סמסטרים (דחוס ככל שניתן)</option>
+              <option value="points">עומס מאוזן (תקרת נק' לסמסטר)</option>
+              <option value="frontload">דחיסה מוקדמת עד תקרה (front-load)</option>
+            </select>
+          </label>
+          <label id="fco-cap-wrap" class="hidden">מקסימום נק' לסמסטר
+            <input type="number" id="fco-cap" min="8" max="30" step="0.5" style="width:70px">
+          </label>
+          <button id="fco-run" type="button" class="add-btn">▶ הרץ אופטימיזציה</button>
+        </div>
+        <p class="section-note" id="fco-sync-note"></p>
+        <div id="fco-summary" class="detect-summary"></div>
+        <div id="fco-grid" class="fc-grid"></div>
+        <div class="fc-legend">
+          <span><i class="fc-line"></i>דרישת קדם</span>
+          <span><i class="fc-line dashed"></i>מקצוע צמוד</span>
+        </div>
+      </section>
+      <svg class="fc-svg" id="fco-svg"></svg>
+    </div>
+
+    <div id="fc-manual-page" class="hidden">
+      <section class="card">
+        <div class="fc-toolbar">
+          <button id="fcm-add-sem" type="button" class="add-btn">+ הוסף סמסטר</button>
+          <button id="fcm-remove-sem" type="button" class="add-btn">− הסר סמסטר</button>
+          <button id="fcm-reset" type="button" class="add-btn">איפוס תכנון ידני</button>
+        </div>
+        <p class="section-note">
+          כל המקצועות מתחילים ב"מגירה" למטה - גררו כל אחד לעמודת הסמסטר שבו תרצו ללמוד אותו.
+          גררו בחזרה למגירה כדי לבטל מיקום. <span style="color:var(--bad)">!</span> בפינת מקצוע =
+          הוא ממוקם בסמסטר לפני שדרישת הקדם שלו בפועל מתמלאת - כדאי לתקן. חצים מראים דרישת קדם
+          (קו רציף) ומקצוע צמוד (מקווקו), בדיוק כמו ב"מסלול המומלץ".
+        </p>
+        <div id="fcm-summary" class="detect-summary"></div>
+        <div class="fc-wrap" id="fcm-wrap">
+          <div id="fcm-grid" class="fc-grid"></div>
+        </div>
+        <svg class="fc-svg" id="fcm-svg"></svg>
+        <div class="fcm-tray-wrap">
+          <div class="fcm-tray-head">📥 מקצועות לא ממוקמים - גררו לתרשים למעלה</div>
+          <div id="fcm-tray" class="fcm-tray fcm-drop-zone" data-sem-index="0"></div>
+        </div>
+      </section>
+    </div>
+
+    <!-- פאנל "מקצועות בחירה" משותף לשלוש התצוגות (מומלץ/אופטימלי/ידני) - נעיצה כאן
+         משפיעה על שתיהן (ראו renderElectives/pinned ב-flowchart.js), ולכן
+         חי מחוץ ל-fc-page/fc-opt-page ולא מוסתר לפי מצב. -->
+    <section class="card fc-electives" id="fc-electives"></section>
+  </main>
+
+  <footer class="site-footer">
+    <p>תבנית placeholder בלבד - לא מייצגת פקולטה אמיתית.</p>
+  </footer>
+
+  <script src="./data.js?v=67"></script>
+  <script src="./semesters.js?v=67"></script>
+  <script src="./prereqs.js?v=67"></script>
+  <script src="./prereq-overrides.js?v=67"></script>
+  <script src="./flowchart-data.js?v=67"></script>
+  <script src="../../js/nav-menu.js?v=67"></script>
+  <script src="../../js/engine.js?v=67"></script>
+  <script src="../../js/optimizer.js?v=67"></script>
+  <script src="../../js/flowchart.js?v=67"></script>
+</body>
+</html>

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FinDeg – הפקולטה לרפואה (standby)</title>
+  <!-- ?v=N מונע ערבוב קבצים ישנים/חדשים מהמטמון של הדפדפן - להעלות N בכל שינוי ב-css/js -->
+  <link rel="stylesheet" href="../../css/style.css?v=67">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧩</text></svg>">
+</head>
+<body>
+  <nav class="tool-hub">
+    <a href="index.html" class="tool-tab active">🎓 FinDeg</a>
+    <div class="tool-tab-dd">
+      <a href="flowcharts.html" class="tool-tab">🗺️ תרשימי זרימה</a>
+      <div class="tool-tab-dd-menu" id="fc-nav-menu"></div>
+    </div>
+  </nav>
+
+  <header class="site-header">
+    <h1>🧩 FinDeg – הפקולטה לרפואה</h1>
+    <p class="tagline">standby בלבד - השלד קיים (מסלולים מזוהים מהקטלוג), אבל דרישות התואר בפועל
+      עדיין לא יוצאו לתוכו. ראו faculties/medicine/tracks/<track>/requirements.js.</p>
+  </header>
+
+  <main>
+    <section id="upload-card" class="card">
+      <h2>העלאת תדפיס ציונים</h2>
+      <p>גררו לכאן את קובץ ה-PDF של תדפיס הציונים, או לחצו לבחירת קובץ.</p>
+      <div id="dropzone" class="dropzone" tabindex="0">
+        <span class="dz-icon">📄</span>
+        <span id="dz-text">גרירת קובץ PDF לכאן / לחיצה לבחירה</span>
+        <input type="file" id="file-input" accept="application/pdf" hidden>
+      </div>
+      <p class="privacy-note">🔒 הקובץ מעובד <b>בדפדפן שלכם בלבד</b> ולא נשלח לשום שרת.</p>
+      <button id="clear-transcript" class="override-btn hidden">🗑️ נקה תדפיס שנטען</button>
+      <div id="parse-error" class="error hidden"></div>
+    </section>
+
+    <section id="settings-card" class="card hidden">
+      <h2>פרטי המסלול</h2>
+      <div class="settings-grid">
+        <label>מסלול לימודים
+          <select id="track-select"></select>
+        </label>
+        <label>קטלוג (לפי שנת תחילת התואר)
+          <select id="year-select"></select>
+        </label>
+        <label id="spec-wrap" class="hidden">התמחות
+          <select id="spec-select"></select>
+        </label>
+        <label id="project-wrap" class="hidden">איזה פרויקט (נוסף) בכוונתך לבצע?
+          <select id="project-select"></select>
+        </label>
+      </div>
+      <div id="detect-summary" class="detect-summary"></div>
+    </section>
+
+    <section id="results" class="hidden"></section>
+  </main>
+
+  <footer class="site-footer">
+    <p>standby בלבד - דרישות התואר עדיין לא יוצאו מהקטלוג לתוך תיקייה זו.</p>
+  </footer>
+
+  <div id="project-nudge" class="hidden" role="status">
+    <button id="nudge-close" class="nudge-close" aria-label="סגור">×</button>
+    <div class="nudge-body">
+      <span class="nudge-icon">📌</span>
+      <p>טרם בחרתם פרויקט שני. לחצו כדי לבחור מהרשימה ולראות את דרישות ההתמחות המדויקות שלכם.</p>
+    </div>
+  </div>
+
+  <script src="../../vendor/pdf.min.js"></script>
+  <script src="./tracks/medicine/requirements.js?v=67"></script>
+  <script src="./data.js?v=67"></script>
+  <script src="./semesters.js?v=67"></script>
+  <script src="./flowchart-data.js?v=67"></script>
+  <script src="../../js/nav-menu.js?v=67"></script>
+  <script src="../../js/parser.js?v=67"></script>
+  <script src="./detect.js?v=67"></script>
+  <script src="../../js/engine.js?v=67"></script>
+  <script src="../../js/optimizer.js?v=67"></script>
+  <script src="../../js/app.js?v=67"></script>
+</body>
+</html>
