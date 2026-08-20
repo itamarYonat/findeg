@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>תרשימי זרימה – FinDeg (הפקולטה למדעי המחשב, standby)</title>
-  <link rel="stylesheet" href="../../css/style.css?v=67">
+  <link rel="stylesheet" href="../../css/style.css?v=78">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🗺️</text></svg>">
 </head>
 <body>
@@ -75,13 +75,14 @@
           <label>יעד האופטימיזציה
             <select id="fco-goal">
               <option value="recommended">מומלץ (עמוס בהתחלה, קליל בהמשך)</option>
-              <option value="semesters">מינימום סמסטרים (דחוס ככל שניתן)</option>
-              <option value="points">עומס מאוזן (תקרת נק' לסמסטר)</option>
-              <option value="frontload">דחיסה מוקדמת עד תקרה (front-load)</option>
+              <option value="semesters">מינימום סמסטרים (עומס מאוזן)</option>
+              <option value="frontload">דחיסה מוקדמת (front-load)</option>
+              <option value="fixedPoints">תקרת נק' קבועה</option>
+              <option value="fixedSemesters">מספר סמסטרים קבוע</option>
             </select>
           </label>
-          <label id="fco-cap-wrap" class="hidden">מקסימום נק' לסמסטר
-            <input type="number" id="fco-cap" min="8" max="30" step="0.5" style="width:70px">
+          <label id="fco-fixed-wrap" class="hidden"><span id="fco-fixed-label">תקרת נק' לסמסטר</span>
+            <input type="number" id="fco-fixed" min="8" max="40" step="0.5" style="width:70px">
           </label>
           <button id="fco-run" type="button" class="add-btn">▶ הרץ אופטימיזציה</button>
         </div>
@@ -122,20 +123,20 @@
     <p>standby בלבד - לא מייצג פקולטה פעילה עד שיוזנו נתונים אמיתיים.</p>
   </footer>
 
-  <script src="./tracks/computer-science/requirements.js?v=67"></script>
-  <script src="./tracks/software-engineering/requirements.js?v=67"></script>
-  <script src="./tracks/computer-eng-joint-electrical/requirements.js?v=67"></script>
-  <script src="./tracks/cs-math/requirements.js?v=67"></script>
-  <script src="./tracks/cs-physics/requirements.js?v=67"></script>
-  <script src="./tracks/cs-medicine/requirements.js?v=67"></script>
-  <script src="./data.js?v=67"></script>
-  <script src="./semesters.js?v=67"></script>
-  <script src="./prereqs.js?v=67"></script>
-  <script src="./prereq-overrides.js?v=67"></script>
-  <script src="./flowchart-data.js?v=67"></script>
-  <script src="../../js/nav-menu.js?v=67"></script>
-  <script src="../../js/engine.js?v=67"></script>
-  <script src="../../js/optimizer.js?v=67"></script>
-  <script src="../../js/flowchart.js?v=67"></script>
+  <script src="./tracks/computer-science/requirements.js?v=78"></script>
+  <script src="./tracks/software-engineering/requirements.js?v=78"></script>
+  <script src="./tracks/computer-eng-joint-electrical/requirements.js?v=78"></script>
+  <script src="./tracks/cs-math/requirements.js?v=78"></script>
+  <script src="./tracks/cs-physics/requirements.js?v=78"></script>
+  <script src="./tracks/cs-medicine/requirements.js?v=78"></script>
+  <script src="./data.js?v=78"></script>
+  <script src="./semesters.js?v=78"></script>
+  <script src="./prereqs.js?v=78"></script>
+  <script src="./prereq-overrides.js?v=78"></script>
+  <script src="./flowchart-data.js?v=78"></script>
+  <script src="../../js/nav-menu.js?v=78"></script>
+  <script src="../../js/engine.js?v=78"></script>
+  <script src="../../js/optimizer.js?v=78"></script>
+  <script src="../../js/flowchart.js?v=78"></script>
 </body>
 </html>

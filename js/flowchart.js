@@ -89,31 +89,26 @@
   // אחרת דריסה ידנית של המשתמש/ת - חיוני למי שאין לו/ה תדפיס מסונכרן בכלל
   // (אז אין ממה לנחש) או שהניחוש האוטומטי פשוט טועה.
   let optStartSeason = "";
-  // מטרת האופטימיזציה (תצוגת "תכנון אופטימלי" בלבד): "recommended" (ברירת
-  // מחדל) - עמוס בכוונה בשנים הראשונות (עד optCapPts, ברירת מחדל 25) ומקל
-  // בהדרגה מסמסטר ב' של שנה ג' ואילך (taper/taperPeak ב-FINDEG_OPTIMIZER.
-  // computePlan) - כך רוב הסטודנטים/ות בפועל מעדיפים לתכנן (בקשת המשתמש/ת,
-  // 2026-07-19). "semesters" - ממזער מספר סמסטרים קודם כל, בלי תקרת נק'/סמסטר
-  // אמיתית (רק מגבלה טכנית גבוהה כדי שהאלגוריתם לא ידחוס הכול לסמסטר אחד
-  // תיאורטית) - "בשביל להיות עם החברים" הכי מהר שאפשר. "points" - מכבד תקרת
-  // נק'/סמסטר סבירה (optCapPts, ניתנת לכיוונון) גם במחיר עוד סמסטרים, ומאזן
-  // אקטיבית את העומס בין הסמסטרים (מזיז מקצועות עם slack>0 לסמסטר הכי פחות
-  // עמוס). "frontload" - גם מכבד optCapPts, אבל בלי איזון אקטיבי: כל מקצוע
-  // נדחס לסמסטר המוקדם ביותר האפשרי (EPS) וממלא אותו עד התקרה, רק כשסמסטר
-  // בפועל חורג ממנה המקצוע הבא זז לסמסטר הבא - "למלא כל סמסטר עד התקרה ואז
-  // לעבור הלאה" (בקשת המשתמש/ת, 2026-07-16), לא "לפזר באופן שווה" כמו
-  // "points". ארבעת המצבים נתמכים ב-FINDEG_OPTIMIZER.computePlan דרך
-  // options.capPts/frontload/taper/taperPeak בלבד - אין צורך בפרמטר "goal"
-  // נפרד שם.
+  // מטרת האופטימיזציה (תצוגת "תכנון אופטימלי" בלבד) - חמישה מצבים, כולם
+  // עוברים דרך אותו אלגוריתם ב-FINDEG_OPTIMIZER.computePlan (options.goal) -
+  // עדיפות לכל מקצוע = אורך שרשרת הדרישות התלויות בו, פלוס בונוסים למקצוע
+  // שממוקם כמו במסלול המומלץ/בחירה בסמ' 5-7/ספורט-מל"ג אחרי סמ' 4 (ראו הערה
+  // בראש optimizer.js) - שונים רק בתקרת הנק'-לסמסטר:
+  // "recommended" (ברירת מחדל) - 25 נק' לסמסטרים 1-6, 15 לסמסטרים 7-8, בלי
+  // תקרה כלל מעבר לזה (שסתום-שחרור).
+  // "semesters" - ממלא כל סמסטר עד ממוצע הנק' לסמסטר (avgPts, מחושב אוטומטית
+  // מהעדיפות המקסימלית ביקום - "השרשרת הארוכה ביותר").
+  // "frontload" - אותו אורך תוכנית כמו "semesters" בדיוק, אבל בלי לפזר - דוחס
+  // הכי הרבה שאפשר לכל סמסטר (תקרה שטוחה 40, לא אילוץ אמיתי).
+  // "fixedPoints" - כמו "frontload" רק עם תקרה קבועה שהמשתמש/ת בוחר/ת
+  // (optFixedValue) במקום 40.
+  // "fixedSemesters" - כמו "semesters" רק עם מספר-סמסטרים קבוע שהמשתמש/ת
+  // בוחר/ת (optFixedValue) במקום העדיפות המקסימלית.
+  // (בקשת המשתמש/ת, 2026-08-20).
   let optGoal = "recommended";
-  let optCapPts = 25;
-  // תקרת נק'/סמסטר נפרדת ל"דחיסה מוקדמת עד תקרה" - השם עצמו מבטיח "עד תקרה",
-  // אז כמו "עומס מאוזן" זו תקרה שכדאי שתהיה ניתנת לכיוונון; אבל *לא* אותו
-  // משתנה כמו optCapPts (עומס מאוזן) - שינוי הסליידר במצב אחד לא אמור להשפיע
-  // בשקט על השני, שתי התקרות עצמאיות (בקשת המשתמש/ת, 2026-07-21: קודם ביקש/ה
-  // שהתקרה "לא תפריע" למצבים אחרים בכלל, ואז שספציפית ל-front-load כן תהיה
-  // תקרה מכוונת, "כמו שכתוב בשם").
-  let optFrontloadCapPts = 20;
+  // ערך מספרי ל-"fixedPoints"/"fixedSemesters" בלבד (תקרת נק' או מספר
+  // סמסטרים, לפי optGoal) - לא רלוונטי לשאר שלושת המצבים.
+  let optFixedValue = 25;
   // תצוגת "תכנון ידני" (fc-manual-page): manualPos[id] = מספר-סמסטר יחסי
   // (כמו pos ב-optimizer.js, 1 = "הסמסטר הבא") שהמשתמש/ת גרר/ה אליו ידנית -
   // גובר על המיקום האוטומטי (EPS טהור, ראו renderManualView) לאותו מקצוע
@@ -217,9 +212,12 @@
         if (!specFromUrl) specKey = s.specKey || specKey;
         pinned = s.pinned || {}; projectKey = s.projectKey || "";
         optStartSeason = s.optStartSeason || "";
-        optGoal = ["recommended", "points", "frontload", "semesters"].includes(s.optGoal) ? s.optGoal : "semesters";
-        optCapPts = s.optCapPts > 0 ? s.optCapPts : 20;
-        optFrontloadCapPts = s.optFrontloadCapPts > 0 ? s.optFrontloadCapPts : 20;
+        // "points" (מצב "עומס מאוזן" הישן, עם תקרת נק' ניתנת-לכיוונון בלי
+        // אלגוריתם-עדיפות) הוסר - תדפיס ישן ששמר "points" נופל בחזרה ל-
+        // "semesters" (המצב המאוזן החדש, אוטומטי לגמרי) במקום לקרוס על ערך לא-תקין.
+        optGoal = ["recommended", "frontload", "semesters", "fixedPoints", "fixedSemesters"].includes(s.optGoal)
+          ? s.optGoal : "semesters";
+        optFixedValue = s.optFixedValue > 0 ? s.optFixedValue : 25;
         manualPos = s.manualPos || {};
         manualExtraCols = s.manualExtraCols > 0 ? s.manualExtraCols : 0;
         hardPins = s.hardPins || {};
@@ -234,7 +232,7 @@
   }
   function saveState() {
     localStorage.setItem(storeKey(currentStoreName()), JSON.stringify({
-      trackKey, yearKey, specKey, pinned, projectKey, optStartSeason, optGoal, optCapPts, optFrontloadCapPts,
+      trackKey, yearKey, specKey, pinned, projectKey, optStartSeason, optGoal, optFixedValue,
       manualPos, manualExtraCols, hardPins, excluded
     }));
   }
@@ -399,8 +397,7 @@
   let pushedFrom = {};
 
   // סמסטר בפועל של כל מקצוע המוצג כרגע (חובה+גמיש+פרויקט+נעוץ), לשימוש בחישוב
-  // שרשרת קריטית אמיתית (במונחי מרחק-סמסטרים, לא רק מספר קפיצות בגרף) וגם
-  // למיקום בפועל ברשת (renderGrid).
+  // השרשרת הקריטית (ראו computeCriticalPath) וגם למיקום בפועל ברשת (renderGrid).
   function computeSemNumMap() {
     const map = {};
     for (const col of buildColumns()) {
@@ -441,135 +438,64 @@
     return map;
   }
 
-  // שרשרת(ות) הדרישות-קדם הארוכות ביותר, לפי המרחק האמיתי המינימלי האפשרי -
-  // לא לפי מספרי הסמסטר "הרשמיים" של flowchart-data.js. ההבדל חשוב: מקצוע
-  // גמיש (ניתן בשתי העונות, כמו מבוא למכניקה הנדסית/תורת החוזק 1) יכול "לזוז"
-  // בלוח הזמנים בלי לעכב שום דבר - וסטודנט חכם ינצל את הגמישות הזו כדי למזער
-  // המתנה למקצוע נוקשה בהמשך השרשרת (שניתן בעונה אחת בלבד). למשל: אם תורת
-  // החוזק מסתיים באביב וגיאולוגיה (אביב בלבד) לא זמינה שוב עד לאביב הבא -
-  // שנה שלמה של המתנה! - בעוד שאם מזיזים את תורת החוזק סמסטר קדימה (עדיין
-  // גמיש, לא באמת "מתעכבים") ומסיימים אותו בחורף, גיאולוגיה כבר זמינה
-  // בסמסטר שאחריו. בלי לחשב את זה, שרשרת ארוכת-קפיצות אך גמישה-לגמרי (כמו
-  // הדוגמה הזו) הייתה "מנצחת" בטעות שרשרת קצרה יותר אך עם צוואר בקבוק אמיתי
-  // ובלתי נמנע (כמו יסודות מכניקת הזורמים, חורף בלבד, ← גיאומכניקה, חורף
-  // בלבד) - לפי תיקון מפורש של המשתמש (סטודנט במסלול), 2026-07-10.
-  //
-  // המימוש: לכל מקצוע ולכל עונה אפשרית שבה הוא עשוי להסתיים, מחשבים את
-  // המרחק האמיתי המינימלי מתחילת השרשרת - עם אופטימיזציה על בחירת העונה של
-  // כל מקצוע-קדם גמיש (habits ה"רזרבה" ה-CPM-ית). "קריטי" = קשת שבלי רזרבה
-  // בשום בחירת-עונה אפשרית - כלומר משתתפת בשרשרת שמגיעה בדיוק למרחק
-  // המקסימלי הכולל, גם כשממטבים את התזמון בצורה הכי חכמה שאפשר.
-  const REAL_SEASONS = ["winter", "spring"];
-  function seasonOptions(id) {
-    const s = seasonsOf(id);
-    const filtered = s.filter(x => REAL_SEASONS.includes(x));
-    return filtered.length ? filtered : REAL_SEASONS; // לא ידוע/רק קיץ - מניחים גמיש לגמרי
-  }
-  // מספר הסמסטרים המינימלי בין סיום ב-sFrom לבין ההזדמנות הבאה ל-sTo (חוזרים
-  // על אותה עונה רק אחרי שנה שלמה - 2 סמסטרים; העונה השנייה זמינה כבר בסמסטר הבא)
-  function seasonGap(sFrom, sTo) { return sFrom === sTo ? 2 : 1; }
-
+  // עדיפות(id) = אורך השרשרת היורדת הארוכה ביותר שמתחילה ב-id, לפי דרישות-קדם
+  // בלבד (לא adjoining/צמוד, ולא תלוי בעונות/גמישות-סמסטרים - בכוונה, ראו
+  // להלן): מקצוע שאף מקצוע אחר לא תלוי בו (בסט המקצועות המוצג כרגע) = עדיפות
+  // 1; מקצוע שהוא דרישת-קדם ישירה למקצוע עם עדיפות 2 = עדיפות 3, וכן הלאה -
+  // "כמה מקצועות רצופים תלויים במקצוע הזה". מונה-שכבות פשוט על גרף ה-DAG של
+  // דרישות-הקדם, בלי אופטימיזציית-עונה כלל (במקום ה-DP מבוסס-עונות הקודם,
+  // שהיה קשה מדי לחזות ולתקן) - לפי בקשת המשתמש/ת, 2026-08-20: "כל פעם
+  // שאנחנו עורכים משהו אני צריך להילחם איתך על לתקן את זה". "קריטי"
+  // (מסומן באדום) = כל מקצוע/קשת שמשתתפים בשרשרת שמגיעה לעדיפות המקסימלית
+  // הכוללת בתרשים הנוכחי (יכולות להיות כמה שרשראות כאלה בתיקו - כולן
+  // מסומנות). מחושב מחדש לכל trackKey/specKey (semNumMap שונה לגמרי בין
+  // מסלולים) - זו בדיוק ה"עדיפות לפי מגמה נבחרת" שהמשתמש/ת ביקש/ה.
   function computeCriticalPath(semNumMap) {
     const nodes = Object.keys(semNumMap);
     const nodeSet = new Set(nodes);
-    const adjOut = {}, adjIn = {};
-    for (const id of Object.keys(PREREQ)) {
-      if (!nodeSet.has(id)) continue;
+    const adjOut = {}; // src -> מקצועות שיש להם src כדרישת-קדם ישירה
+    for (const id of nodes) {
       const p = PREREQ[id];
-      for (const src of [...(p.prereq || []), ...(p.adjoining || [])]) {
-        if (!nodeSet.has(src)) continue;
-        (adjOut[src] = adjOut[src] || []).push(id);
-        (adjIn[id] = adjIn[id] || []).push(src);
+      for (const src of ((p && p.prereq) || [])) {
+        if (nodeSet.has(src)) (adjOut[src] = adjOut[src] || []).push(id);
       }
     }
 
-    // longestTo(id, season): השרשרת הארוכה ביותר (בבחירת-עונה אופטימלית לכל
-    // מקצוע-קדם) שמסתיימת ב-id, בהנחה ש-id עצמו מסתיים בעונה הנתונה.
-    const memoTo = {};
-    function longestTo(id, season) {
-      const key = id + "|" + season;
-      if (memoTo[key]) return memoTo[key];
-      memoTo[key] = { hops: 0, span: 0 }; // מגן זמני מפני מעגל (לא צפוי בפועל)
-      let best = { hops: 0, span: 0 };
-      for (const src of (adjIn[id] || [])) {
-        let bestSrc = null;
-        for (const sSrc of seasonOptions(src)) {
-          const sub = longestTo(src, sSrc);
-          const gap = seasonGap(sSrc, season);
-          const cand = { hops: sub.hops + 1, span: sub.span + gap };
-          // בוחרים את עונת מקצוע-הקדם שממזערת את המרחק האמיתי (הרזרבה שהגמישות מאפשרת)
-          if (!bestSrc || cand.span < bestSrc.span || (cand.span === bestSrc.span && cand.hops > bestSrc.hops)) bestSrc = cand;
-        }
-        if (bestSrc && (bestSrc.span > best.span || (bestSrc.span === best.span && bestSrc.hops > best.hops))) best = bestSrc;
-      }
-      memoTo[key] = best;
-      return best;
+    const memo = {};
+    function priority(id) {
+      if (id in memo) return memo[id];
+      memo[id] = 1; // מגן זמני מפני מעגל (לא צפוי בפועל)
+      let best = 0;
+      for (const nxt of (adjOut[id] || [])) best = Math.max(best, priority(nxt));
+      return (memo[id] = best + 1);
     }
-    // longestFrom(id, season): ההמשך הארוך ביותר *אחרי* id, בהנחה ש-id הסתיים בעונה הנתונה.
-    const memoFrom = {};
-    function longestFrom(id, season) {
-      const key = id + "|" + season;
-      if (memoFrom[key]) return memoFrom[key];
-      memoFrom[key] = { hops: 0, span: 0 };
-      let best = { hops: 0, span: 0 };
-      for (const nxt of (adjOut[id] || [])) {
-        let bestNxt = null;
-        for (const sNxt of seasonOptions(nxt)) {
-          const sub = longestFrom(nxt, sNxt);
-          const gap = seasonGap(season, sNxt);
-          const cand = { hops: sub.hops + 1, span: sub.span + gap };
-          if (!bestNxt || cand.span < bestNxt.span || (cand.span === bestNxt.span && cand.hops > bestNxt.hops)) bestNxt = cand;
-        }
-        if (bestNxt && (bestNxt.span > best.span || (bestNxt.span === best.span && bestNxt.hops > best.hops))) best = bestNxt;
-      }
-      memoFrom[key] = best;
-      return best;
-    }
+    let maxPriority = 0;
+    for (const id of nodes) maxPriority = Math.max(maxPriority, priority(id));
 
-    // לכל מקצוע: בוחרים את העונה-שלו-עצמו שממזערת את סך המרחק (קדם+המשך) -
-    // זו העונה ה"אמיתית" הכי חכמה לתזמן בה אותו מקצוע ספציפי. המקסימום מבין
-    // כל אלה הוא אורך שרשרת הצוואר-בקבוק האמיתי שאי-אפשר להימנע ממנו.
-    let overall = { hops: 0, span: 0 };
-    const bestSeasonOf = {};
+    // עוקבים מכל מקצוע שמגיע לעדיפות המקסימלית אל המקצועות התלויים בו שהעדיפות
+    // שלהם נמוכה בדיוק ב-1 - בהכרח קיים כזה עד עדיפות 1 (ראו הגדרת priority
+    // למעלה), כך שההליכה תמיד מגיעה עד עלה בתחתית השרשרת.
+    const critNodes = new Set(), edges = new Set();
+    function walk(cur) {
+      for (const nxt of (adjOut[cur] || [])) {
+        if (priority(nxt) !== priority(cur) - 1) continue;
+        edges.add(cur + "->" + nxt);
+        if (!critNodes.has(nxt)) { critNodes.add(nxt); walk(nxt); }
+      }
+    }
     for (const id of nodes) {
-      let bestForId = null;
-      for (const season of seasonOptions(id)) {
-        const to = longestTo(id, season), from = longestFrom(id, season);
-        const cand = { hops: to.hops + from.hops, span: to.span + from.span };
-        if (!bestForId || cand.span < bestForId.span || (cand.span === bestForId.span && cand.hops > bestForId.hops)) {
-          bestForId = cand; bestSeasonOf[id] = season;
-        }
-      }
-      if (bestForId && (bestForId.span > overall.span || (bestForId.span === overall.span && bestForId.hops > overall.hops))) overall = bestForId;
+      if (priority(id) !== maxPriority) continue;
+      critNodes.add(id);
+      walk(id);
     }
 
-    // קשת קריטית: אין לה רזרבה בשום שילוב-עונות אפשרי - מגיעה בדיוק לאורך המקסימלי הכולל
-    const edges = new Set(), critNodes = new Set();
-    for (const id of nodes) {
-      for (const to of (adjOut[id] || [])) {
-        for (const sFrom of seasonOptions(id)) {
-          for (const sTo of seasonOptions(to)) {
-            const before = longestTo(id, sFrom), after = longestFrom(to, sTo);
-            const gap = seasonGap(sFrom, sTo);
-            const hops = before.hops + 1 + after.hops, span = before.span + gap + after.span;
-            if (hops === overall.hops && span === overall.span) {
-              edges.add(id + "->" + to);
-              critNodes.add(id);
-              critNodes.add(to);
-            }
-          }
-        }
-      }
-    }
-    // אם אין אף קשת (שרשרת של מקצוע בודד, למשל מרחב תרשים חלקי) - עדיין לפחות
-    // המקצוע הבודד הארוך ביותר עצמו נספר, כדי שהתמצית למטה לא תישאר ריקה סתם
-    if (!edges.size) {
-      for (const id of nodes) {
-        const season = bestSeasonOf[id];
-        if (season && longestTo(id, season).hops + longestFrom(id, season).hops === overall.hops) critNodes.add(id);
-      }
-    }
-    return { nodes: critNodes, edges, span: overall.span };
+    // span להצגה בתמצית שמתחת לתרשים בלבד - המרחק בפועל בסמסטרים בין ראשון
+    // לאחרון בשרשרת, לפי המיקום הנוכחי ב-semNumMap (לא תיאורטי-אופטימלי).
+    let span = 0;
+    const placedSems = [...critNodes].map(id => semNumMap[id]).filter(n => n != null);
+    if (placedSems.length) span = Math.max(...placedSems) - Math.min(...placedSems);
+
+    return { nodes: critNodes, edges, span };
   }
 
   // שרשרת קריטית נוכחית + מקצועות שהושלמו (מחושבים מחדש בתחילת כל render, ראו
@@ -1385,34 +1311,22 @@
       const svg0 = $("#fco-svg"); if (svg0) svg0.innerHTML = "";
       return;
     }
-    // מטרת "מינימום סמסטרים" מבוטאת כאן כ-capPts=0 (falsy) - מבטל את כל בדיקות
-    // תקרת הנק'/סמסטר בתוך FINDEG_OPTIMIZER (שלב 3/fillElectives/repairPrereqOrder,
-    // כולן כתובות כ-`if (capPts && ...)`) בלי לגעת באלגוריתם עצמו: המקצועות
-    // נדחסים הכי צפוף שדרישות קדם/עונות מאפשרות, בלי לפזר בגלל עומס נק' - בדיוק
-    // "מינימום סמסטרים" מבלי לשנות שורת קוד אחת ב-optimizer.js.
-    // "עומס מאוזן" ו"דחיסה מוקדמת עד תקרה" הן שתי התקרות היחידות שניתנות
-    // לכיוונון ע"י המשתמש/ת (השם "עד תקרה" מבטיח את זה במפורש) - כל אחת עם
-    // המשתנה שלה (optCapPts/optFrontloadCapPts), לא משותפות: שינוי הסליידר
-    // במצב אחד לא אמור "לדלוף" ולשנות בשקט גם את ההתנהגות במצב השני (בקשת
-    // המשתמש/ת, 2026-07-21). "מומלץ" (taper) ממשיכה להשתמש בברירת המחדל
-    // הקבועה של buildTaperCap עצמה (taperPeak=undefined) - אין לה תקרה
-    // מבוטאת בשם שלה, אז לא נחשפת כפרמטר מכוונן.
-    const effectiveCapPts = optGoal === "points" ? optCapPts
-      : optGoal === "frontload" ? optFrontloadCapPts
-      : optGoal === "semesters" ? 0
-      : undefined;
+    // כל חמשת מצבי האופטימיזציה (optGoal) עוברים דרך אותו אלגוריתם ב-
+    // FINDEG_OPTIMIZER.computePlan עכשיו (options.goal/fixedValue) - ראו
+    // ההערה בראש optimizer.js. optFixedValue רלוונטי רק ל-"fixedPoints"/
+    // "fixedSemesters" (תקרת נק'/סמסטר סמסטרים בהתאמה, המשתמש/ת קובע/ת ידנית).
     // materializedPlan (state ברמת המודול, למעלה) - התוכנית "מוקפאת" ברגע
     // שחושבה, ולא מחושבת מחדש בכל render: רק ב-null (ביקור ראשון בתצוגה הזו/
     // אחרי "הרץ מחדש"/איפוס/שינוי מסלול-שנה-התמחות-פרויקט) נריץ את
     // FINDEG_OPTIMIZER.computePlan בפועל. גרירה (drop handler למטה) עורכת את
     // materializedPlan.plan *ישירות* בלי לגעת כאן בכלל - "הפונקציה שמארגנת
     // מחדש את התרשים צריכה לרוץ רק בלחיצה על הרצה/איפוס או ברענון הדף", לא
-    // בכל גרירה או בכל שינוי הגדרה (יעד/תקרה) - אלה נשמרים כהעדפה ל"הרצה"
+    // בכל גרירה או בכל שינוי הגדרה (יעד) - אלה נשמרים כהעדפה ל"הרצה"
     // הבאה בלבד, לא מיושמים מיד (בקשת המשתמש/ת, 2026-07-25).
     if (!materializedPlan) {
       materializedPlan = FINDEG_OPTIMIZER.computePlan(res, synthParsed,
-        { trackKey, specialization: specKey, projectKey: projectKey || null, capPts: effectiveCapPts,
-          frontload: optGoal === "frontload", taper: optGoal === "recommended",
+        { trackKey, specialization: specKey, projectKey: projectKey || null,
+          goal: optGoal, fixedValue: optFixedValue,
           startSeason: optStartSeason || undefined, yearKey, pinnedIds: Object.keys(pinned), hardPins,
           preferredIds: [...laterSet], excludedIds: Object.keys(excluded) });
     }
@@ -1565,7 +1479,7 @@
   // הכול מתחיל ב"מגירה" הלא-ממוקמת (fcm-tray) - שום מקצוע לא ממוקם אוטומטית
   // מלכתחילה, רק manualPos (state מודול, ראו למעלה - id -> מספר-סמסטר יחסי
   // שהמשתמש/ת גרר/ה אליו בפועל) קובע מה מופיע בעמודות. FINDEG_OPTIMIZER.
-  // computePlan עדיין רץ ברקע (frontload+capPts=0, "הכי נקי") אבל *רק* כדי
+  // computePlan עדיין רץ ברקע (goal:"frontload", הכי זול לחשב) אבל *רק* כדי
   // לשלוף את יקום המקצועות הרלוונטי (mandatoryIds/electivePools/pointsById)
   // ואת nominalSemester - לא כדי להציע מיקום התחלתי (בקשת המשתמש/ת,
   // 2026-07-16: "זה צריך להתחיל עם כל הקורסים בצד לפני שאני מזיז אותם").
@@ -1585,7 +1499,7 @@
       return;
     }
     const basePlan = FINDEG_OPTIMIZER.computePlan(res, synthParsed,
-      { trackKey, specialization: specKey, projectKey: projectKey || null, capPts: 0, frontload: true,
+      { trackKey, specialization: specKey, projectKey: projectKey || null, goal: "frontload",
         startSeason: optStartSeason || undefined, yearKey, pinnedIds: Object.keys(pinned) });
 
     // יקום המקצועות הרלוונטי: חובה שנותר + כל מועמדי-הבחירה הפתוחים (לא רק
@@ -1812,40 +1726,44 @@
       ssnsel.value = optStartSeason;
       ssnsel.addEventListener("change", e => { optStartSeason = e.target.value; saveState(); renderCurrent(); });
     }
-    // תקרת נק'/סמסטר ניתנת-לכיוונון קיימת לשני מצבים בלבד ("עומס מאוזן"/
-    // "דחיסה מוקדמת עד תקרה" - שניהם עם "תקרה" בשם עצמו), כל אחד עם המשתנה
-    // הנפרד שלו (optCapPts/optFrontloadCapPts, ראו הערה שם) - לא קלט אחד
-    // משותף. capValueForGoal/setCapForGoal ממפים בין מצב לבין המשתנה שלו.
-    function capValueForGoal(goal) {
-      return goal === "frontload" ? optFrontloadCapPts : optCapPts;
+    // ערך מספרי רלוונטי לשני מצבים בלבד ("fixedPoints"/"fixedSemesters" -
+    // שניהם עם ערך-קלט ידני יחיד, optFixedValue) - התווית/הטווח מתחלפים
+    // לפי המצב הנבחר, אותו input בפועל (בקשת המשתמש/ת, 2026-08-20).
+    const goalSel = $("#fco-goal"), fixedWrap = $("#fco-fixed-wrap"), fixedInput = $("#fco-fixed"),
+      fixedLabel = $("#fco-fixed-label");
+    const FIXED_RELEVANT = { fixedPoints: true, fixedSemesters: true };
+    const FIXED_META = {
+      fixedPoints: { label: "תקרת נק' לסמסטר", min: 8, max: 40, step: 0.5 },
+      fixedSemesters: { label: "מספר סמסטרים", min: 1, max: 16, step: 1 }
+    };
+    function applyFixedUi(goal) {
+      const relevant = !!FIXED_RELEVANT[goal];
+      if (fixedWrap) fixedWrap.classList.toggle("hidden", !relevant);
+      if (!relevant) return;
+      const meta = FIXED_META[goal];
+      if (fixedLabel) fixedLabel.textContent = meta.label;
+      if (fixedInput) { fixedInput.min = meta.min; fixedInput.max = meta.max; fixedInput.step = meta.step; fixedInput.value = optFixedValue; }
     }
-    function setCapForGoal(goal, v) {
-      if (goal === "frontload") optFrontloadCapPts = v; else optCapPts = v;
-    }
-    const goalSel = $("#fco-goal"), capInput = $("#fco-cap"), capWrap = $("#fco-cap-wrap");
-    const capRelevant = goal => goal === "points" || goal === "frontload";
     if (goalSel) {
       goalSel.value = optGoal;
-      if (capInput) capInput.value = capValueForGoal(optGoal);
-      if (capWrap) capWrap.classList.toggle("hidden", !capRelevant(optGoal));
+      applyFixedUi(optGoal);
       goalSel.addEventListener("change", e => {
         optGoal = e.target.value;
-        if (capInput) capInput.value = capValueForGoal(optGoal);
-        if (capWrap) capWrap.classList.toggle("hidden", !capRelevant(optGoal));
+        applyFixedUi(optGoal);
         saveState();
         renderCurrent();
       });
     }
-    if (capInput) capInput.addEventListener("change", e => {
+    if (fixedInput) fixedInput.addEventListener("change", e => {
       const v = +e.target.value;
-      if (v > 0) setCapForGoal(optGoal, v);
-      e.target.value = capValueForGoal(optGoal);
+      if (v > 0) optFixedValue = v;
+      e.target.value = optFixedValue;
       saveState();
       renderCurrent();
     });
     // "הרץ אופטימיזציה" - הטריגר המפורש היחיד (מלבד איפוס/רענון-דף) שגורם
     // ל-renderOptimizerView לחשב מחדש בפועל (מאפס את materializedPlan) - כל
-    // שינוי יעד/תקרה עד עכשיו רק נשמר כהעדפה, לא הופעל מיד (בקשת המשתמש/ת,
+    // שינוי יעד עד עכשיו רק נשמר כהעדפה, לא הופעל מיד (בקשת המשתמש/ת,
     // 2026-07-25). hardPins נשארים כפי שהם - מקצועות שנגררו ידנית קודם
     // נשארים קבועים גם אחרי הרצה חדשה, בדיוק כמו שהיה תמיד.
     const runBtn = $("#fco-run");
