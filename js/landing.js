@@ -50,6 +50,7 @@
   $("#manual-go").addEventListener("click", () => goToFaculty($("#faculty-select").value, sessionStorage.getItem(HANDOFF_KEY) != null));
 
   async function handleFile(file) {
+    if (window.FINDEG_TRACK) window.FINDEG_TRACK("upload");
     $("#parse-error").classList.add("hidden");
     $("#dz-text").textContent = "מזהה פקולטה מתוך " + file.name + "…";
     try {

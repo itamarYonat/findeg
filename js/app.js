@@ -138,6 +138,7 @@
   fi.addEventListener("change", () => { if (fi.files[0]) handleFile(fi.files[0]); });
 
   async function handleFile(file) {
+    if (window.FINDEG_TRACK) window.FINDEG_TRACK("upload");
     $("#parse-error").classList.add("hidden");
     $("#dz-text").textContent = "מעבד את " + file.name + "…";
     try {

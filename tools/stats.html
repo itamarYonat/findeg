@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>FinDeg – סטטיסטיקות (מפתח בלבד)</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    body { max-width: 720px; margin: 0 auto; padding: 24px 16px 60px; }
+    .stat-row { display: flex; gap: 12px; flex-wrap: wrap; margin: 20px 0; }
+    .stat-box { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 16px 20px; flex: 1; min-width: 140px; box-shadow: var(--shadow); }
+    .stat-box .num { font-size: 28px; font-weight: 700; color: var(--accent); }
+    .stat-box .label { color: var(--muted); font-size: 13px; margin-top: 4px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 14px; }
+    th, td { padding: 6px 10px; text-align: center; border-bottom: 1px solid var(--border); }
+    th { color: var(--muted); font-weight: 600; }
+    #key-form { display: flex; gap: 8px; margin: 16px 0; }
+    #key-form input { flex: 1; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border);
+      background: var(--card); color: var(--text); }
+    #key-form button { padding: 8px 16px; border-radius: 8px; border: none; background: var(--accent);
+      color: #fff; cursor: pointer; }
+    #msg { color: var(--muted); font-size: 14px; }
+    #msg.err { color: var(--bad); }
+  </style>
+</head>
+<body>
+  <h1>📊 FinDeg – סטטיסטיקות שימוש</h1>
+  <p class="section-note" style="color: var(--muted)">כלי פנימי למפתח בלבד. לא מקושר משום דף באתר. אין כאן שום ציון או נתון אישי - רק ספירות אנונימיות.</p>
+
+  <form id="key-form">
+    <input type="password" id="key-input" placeholder="מפתח גישה (STATS_KEY)">
+    <button type="submit">הצג</button>
+  </form>
+  <div id="msg"></div>
+
+  <div id="results" class="hidden">
+    <div class="stat-row">
+      <div class="stat-box"><div class="num" id="pv-total">–</div><div class="label">סה"כ כניסות לאתר</div></div>
+      <div class="stat-box"><div class="num" id="up-total">–</div><div class="label">סה"כ גרירות/העלאות תדפיס</div></div>
+      <div class="stat-box"><div class="num" id="conv">–</div><div class="label">אחוז המרה (העלאה מתוך כניסה)</div></div>
+    </div>
+
+    <h2>14 הימים האחרונים</h2>
+    <table>
+      <thead>
+        <tr><th>תאריך</th><th>כניסות</th><th>מבקרים ייחודיים</th><th>העלאות</th><th>מעלים ייחודיים</th></tr>
+      </thead>
+      <tbody id="days-body"></tbody>
+    </table>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "findeg_stats_key";
+    const form = document.getElementById("key-form");
+    const input = document.getElementById("key-input");
+    const msg = document.getElementById("msg");
+    const results = document.getElementById("results");
+
+    function fmtPct(x) { return (x * 100).toFixed(1) + "%"; }
+
+    async function load(key) {
+      msg.classList.remove("err");
+      msg.textContent = "טוען…";
+      try {
+        const res = await fetch("/.netlify/functions/stats?key=" + encodeURIComponent(key));
+        if (res.status === 401) {
+          msg.textContent = "מפתח שגוי או שלא הוגדר STATS_KEY ב-Netlify.";
+          msg.classList.add("err");
+          results.classList.add("hidden");
+          return;
+        }
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const data = await res.json();
+        msg.textContent = "";
+        document.getElementById("pv-total").textContent = data.pageviewsTotal;
+        document.getElementById("up-total").textContent = data.uploadsTotal;
+        document.getElementById("conv").textContent = fmtPct(data.conversionRate);
+        const body = document.getElementById("days-body");
+        body.innerHTML = data.days.slice().reverse().map(d =>
+          `<tr><td>${d.date}</td><td>${d.pageviews}</td><td>${d.uniqueVisitors}</td><td>${d.uploads}</td><td>${d.uniqueUploaders}</td></tr>`
+        ).join("");
+        results.classList.remove("hidden");
+        localStorage.setItem(STORAGE_KEY, key);
+      } catch (err) {
+        msg.textContent = "שגיאה בטעינת הנתונים: " + err.message;
+        msg.classList.add("err");
+      }
+    }
+
+    form.addEventListener("submit", e => {
+      e.preventDefault();
+      if (input.value) load(input.value);
+    });
+
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        input.value = saved;
+        load(saved);
+      }
+    } catch {}
+  </script>
+</body>
+</html>

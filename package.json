@@ -1,0 +1,8 @@
+{
+  "name": "findeg",
+  "private": true,
+  "description": "Netlify Functions dependencies only - the site itself is static, no build step.",
+  "dependencies": {
+    "@netlify/blobs": "^11.0.1"
+  }
+}
